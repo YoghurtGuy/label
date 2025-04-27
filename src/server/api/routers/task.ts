@@ -182,7 +182,6 @@ export const taskRouter = createTRPCRouter({
       const dataset = await ctx.db.dataset.findFirst({
         where: {
           id: datasetId,
-          createdById: ctx.session.user.id,
         },
         include: {
           images: {
@@ -197,6 +196,12 @@ export const taskRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "数据集不存在",
+        });
+      }
+      if (dataset.createdById !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "无权限创建任务",
         });
       }
 
@@ -392,7 +397,6 @@ export const taskRouter = createTRPCRouter({
       const task = await ctx.db.annotationTask.findFirst({
         where: {
           id: input,
-          creatorId: ctx.session.user.id,
         },
       });
 
@@ -400,6 +404,12 @@ export const taskRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "任务不存在",
+        });
+      }
+      if (task.creatorId !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "无权限删除任务",
         });
       }
 

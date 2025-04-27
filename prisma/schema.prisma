@@ -128,8 +128,8 @@ model Annotation {
     text        String?  // OCR文本内容
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
-    createdBy   User     @relation(fields: [createdById], references: [id])
-    createdById String
+    createdBy   User?     @relation(fields: [createdById], references: [id])
+    createdById String?
     image       Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
     imageId     String
     task        AnnotationTask @relation(fields: [taskId], references: [id], onDelete: Cascade)

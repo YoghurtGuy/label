@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Spin } from "antd";
+import { Button} from "antd";
 
 import AnnotationCanvas from "@/app/_components/AnnotationCanvas";
 import AnnotationList from "@/app/_components/AnnotationList";
@@ -23,7 +23,6 @@ export default function LabelPage({
     selectedAnnotation,
     taskDetails,
     currentLabelInfo,
-    isLoading,
     isSaving,
     handleAnnotationChange,
     handleSelectAnnotation,
@@ -90,7 +89,7 @@ export default function LabelPage({
             </div>
           ) : (
             <div className="rounded-lg bg-gray-100 p-8 text-center">
-              <p className="text-gray-500">请选择一张图像进行标注</p>
+              <p className="text-gray-500">加载中...</p>
             </div>
           )}
         </div>

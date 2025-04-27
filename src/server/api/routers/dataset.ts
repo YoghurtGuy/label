@@ -344,7 +344,6 @@ const datasetRouter = createTRPCRouter({
       const dataset = await ctx.db.dataset.findFirst({
         where: {
           id,
-          createdById: ctx.session.user.id,
         },
         include: {
           labels: true,
@@ -355,6 +354,12 @@ const datasetRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "数据集不存在",
+        });
+      }
+      if (dataset.createdById !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "无权限更新数据集",
         });
       }
 
@@ -403,7 +408,6 @@ const datasetRouter = createTRPCRouter({
       const dataset = await ctx.db.dataset.findFirst({
         where: {
           id: input,
-          createdById: ctx.session.user.id,
         },
       });
 
@@ -411,6 +415,12 @@ const datasetRouter = createTRPCRouter({
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "数据集不存在",
+        });
+      }
+      if (dataset.createdById !== ctx.session.user.id) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "无权限删除数据集",
         });
       }
 
