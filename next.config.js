@@ -8,6 +8,7 @@ import "./src/env.js";
 const config = {
   reactStrictMode: true,
   transpilePackages: ['@ant-design/pro-components', 'antd', '@ant-design/icons'],
+  output: "standalone"
   // experimental: {
   //   serverActions: true,
   // },
