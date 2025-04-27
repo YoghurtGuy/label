@@ -1,0 +1,59 @@
+# 项目背景
+这是一个基于 Nextjs 的图像标注 Web 应用程序，用于标注深度学习目标检测和 OCR 识别的数据集，使用 Nextjs 框架编写, 使用 antd 的UI库。
+
+# 项目功能
+- 核心：标注图像，支持矩形、多边形
+- 用户管理功能，标注任务的统计和分配
+- 标注任务管理功能，可以查看标注任务的进度和标注结果
+- 标注任务的导出功能，可以导出标注任务的标注结果
+- 数据集导入功能，可以导入数据集（上传、服务器文件夹、WebDAV）
+
+# 实现思路
+- 记录用户标注的每个点位，便于后续的标注结果的导出及编辑
+
+# 编码标准
+- 使用函数式组件和 Hooks，避免类组件
+- 变量声明优先使用 const，而不是 let
+- 变量和函数名使用 camelCase 规范，组件名使用 PascalCase
+- 高内聚低耦合，尽量减少组件的嵌套层级
+
+# 首选的库
+- 使用yarn作为包管理工具
+- 整体使用T3架构
+- 使用 Next.js 的app router进行导航
+- 使用 tailwind 进行 CSS-in-JS 样式设计
+- 使用trpc库作为前后端接口
+- 使用prisma作为数据库管理的库
+- 数据库是PostgreSQL
+- 身份认证是NextAuth
+- 使用 antd 的UI库，使用React19兼容库import '@ant-design/v5-patch-for-react-19';
+- 表格表单优先使用antd的protable库
+- 环境变量使用src/env.js
+
+
+# 文件结构
+- 总体文件夹结构按 @https://create.t3.gg/en/folder-structure-app?packages=nextauth%2Cprisma%2Ctailwind%2Ctrpc 进行设置
+- src/app/_components: 可复用的 UI 组件
+- src/server/api/routers API: 服务函数
+- src/utils: 工具函数
+- src/app: 页面组件
+- 在文件夹内使用index.ts文件作为入口文件
+- 在文件夹内使用hooks文件作为hooks
+
+# 性能优化指南
+- 对纯函数组件使用 React.memo
+- 路由组件实现懒加载
+- 优化 useEffect 依赖，防止不必要的重新渲染
+- 对服务端组件和客户端组件进行分离，能使用服务端组件的尽量使用服务端组件，不会变动的数据使用服务端组件获取
+- 尽量使用nextui的组件实现
+
+# 文档规范
+- 使用 JSDoc 格式编写函数和组件的注释
+- 组件必须包含 PropTypes 验证
+
+# 错误处理
+- 使用 try/catch 块处理异步操作
+- 实现全局错误边界组件
+
+
+
