@@ -53,7 +53,7 @@ function LoginFormContent() {
       if (result?.error) {
         setError("用户名或密码错误");
       } else {
-        router.push(searchParams.get("callbackUrl") ?? "/");
+        router.push("/");
         router.refresh();
       }
     } catch (err) {

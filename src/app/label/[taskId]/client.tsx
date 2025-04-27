@@ -1,9 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
-
 import { Button, Spin } from "antd";
-import { useSearchParams } from "next/navigation";
 
 import AnnotationCanvas from "@/app/_components/AnnotationCanvas";
 import AnnotationList from "@/app/_components/AnnotationList";
@@ -12,10 +9,11 @@ import type { Label } from "@/types/dataset";
 
 import { useImageAnnotation } from "./hooks";
 
-// 创建一个内部组件来处理 useSearchParams
-const LabelPageContent = () => {
-  const searchParams = useSearchParams();
-  const taskId = searchParams.get("taskId") ?? "";
+export default function LabelPage({
+  taskId,
+}: {
+  taskId: string
+}) {
 
   const {
     imageList,
@@ -49,24 +47,24 @@ const LabelPageContent = () => {
     );
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <Spin size="large" tip="加载中..." />
-      </div>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <div className="flex h-screen items-center justify-center">
+  //       <Spin size="large" tip="加载中..." />
+  //     </div>
+  //   );
+  // }
 
-  if (imageList.length === 0) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="mb-4 text-2xl font-bold text-gray-500">暂无图像</h1>
-          <p className="text-gray-600">该任务下没有可标注的图像</p>
-        </div>
-      </div>
-    );
-  }
+  // if (imageList.length === 0) {
+  //   return (
+  //     <div className="flex h-screen items-center justify-center">
+  //       <div className="text-center">
+  //         <h1 className="mb-4 text-2xl font-bold text-gray-500">暂无图像</h1>
+  //         <p className="text-gray-600">该任务下没有可标注的图像</p>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   const currentImage = imageList.find((img) => img.id === currentImageId);
   const imageUrl = currentImage ? `/img/${currentImage.id}` : "";
@@ -130,17 +128,3 @@ const LabelPageContent = () => {
   );
 };
 
-// 主组件，使用 Suspense 包装内部组件
-const LabelPage = () => {
-  return (
-    <Suspense fallback={
-      <div className="flex h-screen items-center justify-center">
-        <Spin size="large" tip="加载中..." />
-      </div>
-    }>
-      <LabelPageContent />
-    </Suspense>
-  );
-};
-
-export default LabelPage;

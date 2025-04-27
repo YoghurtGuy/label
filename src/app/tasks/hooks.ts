@@ -50,7 +50,7 @@ export const useTasks = () => {
   };
 
   const handleStartTask = (id: string) => {
-    router.push(`/label?taskId=${id}`);
+    router.push(`/label/${id}`);
   };
 
   return {

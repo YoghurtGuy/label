@@ -145,13 +145,14 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
       
       if (obj) {
         canvas.add(obj);
+        canvas.bringObjectToFront(obj);
         // 将标注ID与Fabric对象关联起来
         objectMapRef.current.set(annotation.id, obj);
       }
     });
     
     canvas.renderAll();
-  }, [annotations]);
+  }, [annotations,]);
 
   // 处理外部选中标注的变化
   useEffect(() => {

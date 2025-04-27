@@ -38,10 +38,13 @@ export const useImageAnnotation = (taskId: string) => {
 
   // 当获取到图像标注时，更新标注状态
   useEffect(() => {
-    if (imageAnnotations.length > 0) {
-      setAnnotations(imageAnnotations);
-    } else {
-      setAnnotations([]);
+    // 只在 imageAnnotations 真正发生变化时才更新
+    const hasAnnotations = imageAnnotations.length > 0;
+    const currentHasAnnotations = annotations.length > 0;
+    
+    if (hasAnnotations !== currentHasAnnotations || 
+        JSON.stringify(imageAnnotations) !== JSON.stringify(annotations)) {
+      setAnnotations(hasAnnotations ? imageAnnotations : []);
     }
   }, [imageAnnotations]);
   
