@@ -35,12 +35,12 @@ const Navbar = () => {
       label: <Link href="/">首页</Link>,
     },
     {
-      key: 'tasks',
-      label: <Link href="/tasks">任务</Link>,
-    },
-    {
       key: 'datasets',
       label: <Link href="/datasets">数据集</Link>,
+    },
+    {
+      key: 'tasks',
+      label: <Link href="/tasks">任务</Link>,
     },
   ];
 
