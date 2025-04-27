@@ -126,14 +126,15 @@ model Annotation {
     label       Label?   @relation(fields: [labelId], references: [id])
     labelId     String?
     text        String?  // OCR文本内容
+    status      AnnotationStatus @default(IGNORE)
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
     createdBy   User?     @relation(fields: [createdById], references: [id])
     createdById String?
     image       Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
     imageId     String
-    task        AnnotationTask @relation(fields: [taskId], references: [id], onDelete: Cascade)
-    taskId      String
+    task        AnnotationTask? @relation(fields: [taskId], references: [id])
+    taskId      String?
     points      Point[]  // 用于矩形和多边形标注的点位
 
     @@index([type])
@@ -166,6 +167,13 @@ enum AnnotationType {
 enum DatasetType {
     OBJECT_DETECTION
     OCR
+}
+
+enum AnnotationStatus {
+    PENDING
+    CORRECT
+    INCORRECT
+    IGNORE
 }
 
 model Label {
