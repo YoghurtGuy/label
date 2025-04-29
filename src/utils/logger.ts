@@ -5,7 +5,7 @@ import { env } from "@/env";
 
 const logger = pino(
   {
-    level: env.NODE_ENV === "production" ? "info" : "debug",
+    level: env.NEXT_PUBLIC_NODE_ENV === "production" ? "info" : "debug",
     serializers: {
       req: pino.stdSerializers.req, // 标准请求序列化器
       res: pino.stdSerializers.res, // 标准响应序列化器
@@ -13,6 +13,6 @@ const logger = pino(
     timestamp: () => `,"time":"${new Date().toLocaleString("zh-cn")}"`,
     base: null,
   },
-  process.stdout,
+  // process.stdout,
 );
 export default logger;
