@@ -86,17 +86,17 @@ const datasetRouter = createTRPCRouter({
 
           // 获取已标注的图像数量（有标注的图像）
           const annotatedImageCount = dataset.images.filter(
-            (image) => image.annotations.length > 0,
+            (image) => image.annotations.find((annotation) => !!annotation.createdById),
           ).length;
 
           // 获取已预标注的图像数量（有预标注的图像）
           const preAnnotatedImageCount = dataset.images.filter(
-            (image) => image.annotations.find((annotation) => !!annotation.createdById),
+            (image) => image.annotations.find((annotation) => !annotation.createdById),
           ).length;
 
           // 获取标注总数
           const annotationCount = dataset.images.reduce(
-            (total, image) => total + image.annotations.length,
+            (total, image) => total + image.annotations.filter((annotation) => !!annotation.createdById).length,
             0,
           );
 
