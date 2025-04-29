@@ -4,9 +4,9 @@ import "next-auth/jwt";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 import { db } from "@/server/db";
-import logger from "@/utils/logger";
+// import logger from "@/utils/logger";
 import { comparePassword } from "@/utils/password";
-const authLogger = logger.child({ name: "AUTH" });
+// const authLogger = (await logger()).child({ name: "AUTH" });
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -53,10 +53,11 @@ export const authConfig = {
             typeof username !== "string" ||
             typeof password !== "string"
           ) {
-            authLogger.error({
-              msg: "Missing username or password",
-              credentials,
-            });
+            // authLogger.error({
+            //   msg: "Missing username or password",
+            //   credentials,
+            // });
+            console.error("Missing username or password", credentials);
             throw new Error("username and password are required");
           }
           const user = await db.user.findUnique({
@@ -64,16 +65,18 @@ export const authConfig = {
           });
           // 用户不存在
           if (!user) {
-            authLogger.error({ msg: "User not found", username });
+            // authLogger.error({ msg: "User not found", username });
+            console.error("User not found", username);
             throw new Error("Incorrect email or password");
           }
           // 密码不正确
           if (!comparePassword(password, user.password ?? "")) {
-            authLogger.error({
-              msg: "Incorrect password",
-              username,
-              password,
-            });
+            // authLogger.error({
+            //   msg: "Incorrect password",
+            //   username,
+            //   password,
+            // });
+            console.error("Incorrect password", username, password);
             throw new Error("Incorrect email or password");
           }
           const userInfo = {
@@ -81,15 +84,17 @@ export const authConfig = {
             name: user.name,
             adminPermission: user.adminPermission,
           };
-          authLogger.info({
-            msg: `${user.name} authenticated successfully`,
-          });
+          // authLogger.info({
+          //   msg: `${user.name} authenticated successfully`,
+          // });
+          console.info(`[AUTH] ${user.name} authenticated successfully`);
           return userInfo;
         } catch (err) {
-          authLogger.error({
-            msg: "Error during authentication",
-            error: err,
-          });
+          // authLogger.error({
+          //   msg: "Error during authentication",
+          //   error: err,
+          // });
+          console.error("Error during authentication", err);
           return null;
         }
       },

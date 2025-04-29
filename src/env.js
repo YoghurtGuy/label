@@ -17,7 +17,6 @@ export const env = createEnv({
       .default("development"),
     INVITE_CODE: z.string().optional(),
     SERVER_IMAGES_DIR: z.string(),
-
   },
 
   /**
@@ -26,9 +25,6 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
-    NEXT_PUBLIC_NODE_ENV: z
-    .enum(["development", "test", "production"])
-    .default("development"),
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
   },
 
@@ -42,7 +38,6 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     INVITE_CODE: process.env.INVITE_CODE,
     SERVER_IMAGES_DIR: process.env.SERVER_IMAGES_DIR,
-    NEXT_PUBLIC_NODE_ENV: process.env.NODE_ENV,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

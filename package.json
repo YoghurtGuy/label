@@ -42,7 +42,6 @@
     "fs-extra": "^11.3.0",
     "next": "^15.2.3",
     "next-auth": "^5.0.0-beta.26",
-    "pino": "^9.6.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "server-only": "^0.0.1",

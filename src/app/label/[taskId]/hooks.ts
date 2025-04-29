@@ -6,7 +6,7 @@ import type Vditor from "vditor";
 import { api } from "@/trpc/react";
 import type { Annotation } from "@/types/annotation";
 import type { Label } from "@/types/dataset";
-import logger from "@/utils/logger";
+// import logger from "@/utils/logger";
 /**
  * 图像标注相关的 hooks
  * @param taskId 任务ID
@@ -21,7 +21,7 @@ export const useImageAnnotation = (taskId: string) => {
   const [isSaving, setIsSaving] = useState(false);
   const [currentLabelInfo, setCurrentLabelInfo] = useState<Label | null>(null);
   const [ocrOriginalText, setOcrOriginalText] = useState("获取中...");
-  const imageAnnotationLogger = logger.child({ name: "IMAGE_ANNOTATION", taskId, currentImageId });
+  // const imageAnnotationLogger = logger.child({ name: "IMAGE_ANNOTATION", taskId, currentImageId });
   // 获取任务详情
   const { data: taskDetails, isLoading: isLoadingTask } =
     api.task.getById.useQuery(taskId, {
@@ -82,7 +82,8 @@ export const useImageAnnotation = (taskId: string) => {
       setIsSaving(false);
     },
     onError: (error) => {
-      imageAnnotationLogger.error("保存标注失败:", error);
+      // imageAnnotationLogger.error("保存标注失败:", error);
+      console.error("保存标注失败:", error);
       appMessage.error("保存标注失败");
       setIsSaving(false);
     },
@@ -163,7 +164,7 @@ export const useImageAnnotation = (taskId: string) => {
 
     // TODO: 删除图形
     appMessage.success("标注已删除");
-    imageAnnotationLogger.info("标注已删除");
+    // imageAnnotationLogger.info("标注已删除");
   };
 
   // 保存标注
@@ -214,7 +215,8 @@ export const useImageAnnotation = (taskId: string) => {
         }),
       });
     } catch (error: unknown) {
-      imageAnnotationLogger.error("保存标注失败:", error);
+      // imageAnnotationLogger.error("保存标注失败:", error);
+      console.error("保存标注失败:", error);
       appMessage.error("保存标注失败");
       setIsSaving(false);
     }
@@ -276,7 +278,8 @@ export const useImageAnnotation = (taskId: string) => {
         ],
       });
     } catch (error: unknown) {
-      imageAnnotationLogger.error("保存标注失败:", error);
+      // imageAnnotationLogger.error("保存标注失败:", error);
+      console.error("保存标注失败:", error);
       appMessage.error("保存标注失败");
       setIsSaving(false);
     }

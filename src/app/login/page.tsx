@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 
-import logger from "@/utils/logger";
+// import logger from "@/utils/logger";
 /**
  * 登录页面组件
  * @returns {JSX.Element} 登录页面
@@ -27,7 +27,7 @@ function LoginFormContent() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const loginLogger = logger.child({ name: "LOGIN" });
+  // const loginLogger = logger.child({ name: "LOGIN" });
   useEffect(() => {
     // 检查是否有注册成功的消息
     if (searchParams.get("registered") === "true") {
@@ -59,7 +59,8 @@ function LoginFormContent() {
       }
     } catch (err) {
       setError("登录过程中发生错误，请稍后再试");
-      loginLogger.error("登录错误:", err);
+      // loginLogger.error("登录错误:", err);
+      console.error("登录错误:", err);
     } finally {
       setIsLoading(false);
     }

@@ -11,11 +11,11 @@ import { env } from "@/env";
 import type { ImportProgress } from "@/types/import";
 import { getDirectoryTree } from "@/utils/fileSystem";
 import { getImagesFromDirectory, getImageMetadata } from "@/utils/image";
-import logger from "@/utils/logger";
+// import logger from "@/utils/logger";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
-const datasetLogger = logger.child({ name: "DATASET" });
+// const datasetLogger = logger.child({ name: "DATASET" });
 // 创建一个事件发射器来处理进度更新
 const progressEmitter = new EventEmitter();
 
@@ -263,7 +263,8 @@ const datasetRouter = createTRPCRouter({
                 status: "processing",
               } as ImportProgress);
             } catch (error) {
-              datasetLogger.error(`处理图像失败: ${imageFile.path}`, error);
+              // datasetLogger.error(`处理图像失败: ${imageFile.path}`, error);
+              console.error(`处理图像失败: ${imageFile.path}`, error);
               failedFiles.push(imageFile.filename);
               continue;
             }
@@ -292,7 +293,8 @@ const datasetRouter = createTRPCRouter({
           await ctx.db.dataset.delete({
             where: { id: dataset.id },
           });
-          datasetLogger.error("导入图像失败", error);
+          // datasetLogger.error("导入图像失败", error);
+          console.error("导入图像失败", error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: error instanceof Error ? error.message : "导入图像时出错",
