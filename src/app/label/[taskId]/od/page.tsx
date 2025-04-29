@@ -1,4 +1,4 @@
-import LabelPage from "./client";
+import ObjectDetectionPage from "./client";
 
 export default async function Page({
     params,
@@ -6,5 +6,5 @@ export default async function Page({
     params: Promise<{ taskId: string }>
   }) {
     const { taskId } = await params
-    return <LabelPage taskId={taskId} />
+    return <ObjectDetectionPage taskId={taskId} />
   }

@@ -37,7 +37,13 @@ export default function DatasetsPage() {
     <>
       <ProList<Dataset>
         rowKey="id"
-        dataSource={activeKey === "all" ? datasetsData?.items : datasetsData?.items.filter((item) => item.createdById === session.data?.user.id)}
+        dataSource={
+          activeKey === "all"
+            ? datasetsData?.items
+            : datasetsData?.items.filter(
+                (item) => item.createdById === session.data?.user.id,
+              )
+        }
         loading={isLoading}
         pagination={{
           pageSize: 10,
@@ -68,28 +74,42 @@ export default function DatasetsPage() {
                 key="label"
                 style={{ display: "flex", justifyContent: "space-around" }}
               >
-                <div>
-                  <div className="text-center">标签</div>
-                  <div className="flex flex-wrap">
-                    {record.labels.slice(0, 3).map((label) => (
-                      <Tag key={label.id} color={label.color}>
-                        {label.name}
-                      </Tag>
-                    ))}
+                {record.type === "OBJECT_DETECTION" && (
+                  <div>
+                    <div className="text-center">标签</div>
+                    <div className="flex flex-wrap">
+                      {record.labels.slice(0, 3).map((label) => (
+                        <Tag key={label.id} color={label.color}>
+                          {label.name}
+                        </Tag>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
                 <div>
                   <div className="text-center">图像</div>
                   <div className="text-center font-bold">
-                  {record.stats?.annotatedImageCount}/{record.stats?.imageCount}
+                    {record.stats?.annotatedImageCount}/
+                    {record.stats?.imageCount}
                   </div>
                 </div>
-                <div>
-                  <div className="text-center">标注</div>
-                  <div className="text-center font-bold">
-                    {record.stats?.annotationCount}
+                {record.type === "OBJECT_DETECTION" && (
+                  <div>
+                    <div className="text-center">标注</div>
+                    <div className="text-center font-bold">
+                      {record.stats?.annotationCount}
+                    </div>
                   </div>
-                </div>
+                )}
+                {record.type === "OCR" && (
+                  <div>
+                    <div className="text-center">预标注</div>
+                    <div className="text-center font-bold">
+                      {record.stats?.preAnnotatedImageCount}/
+                      {record.stats?.imageCount}
+                    </div>
+                  </div>
+                )}
                 <div>
                   <div className="text-center">创建时间</div>
                   <div className="text-center">
@@ -101,10 +121,7 @@ export default function DatasetsPage() {
           },
           actions: {
             render: (_, record) => [
-              <Button
-                key="edit"
-                onClick={() => handleEditDataset(record.id)}
-              >
+              <Button key="edit" onClick={() => handleEditDataset(record.id)}>
                 编辑
               </Button>,
               <Button
@@ -123,7 +140,7 @@ export default function DatasetsPage() {
                 cancelText="取消"
               >
                 <Button danger>删除</Button>
-              </Popconfirm>
+              </Popconfirm>,
             ],
           },
         }}
@@ -132,16 +149,28 @@ export default function DatasetsPage() {
             activeKey,
             items: [
               {
-                key: 'all',
+                key: "all",
                 label: (
-                  <span>全部数据集{renderBadge(datasetsData?.items.length ?? 0, activeKey === 'all')}</span>
+                  <span>
+                    全部数据集
+                    {renderBadge(
+                      datasetsData?.items.length ?? 0,
+                      activeKey === "all",
+                    )}
+                  </span>
                 ),
               },
               {
-                key: 'mine',
+                key: "mine",
                 label: (
                   <span>
-                    我创建的数据集{renderBadge(datasetsData?.items.filter((item) => item.createdById === session.data?.user.id).length ?? 0, activeKey === 'mine')}
+                    我创建的数据集
+                    {renderBadge(
+                      datasetsData?.items.filter(
+                        (item) => item.createdById === session.data?.user.id,
+                      ).length ?? 0,
+                      activeKey === "mine",
+                    )}
                   </span>
                 ),
               },
@@ -149,14 +178,10 @@ export default function DatasetsPage() {
             onChange: handleMenuChange,
           },
           actions: [
-            <Button
-            key="create"
-            type="primary"
-            onClick={handleCreateDataset}
-          >
-            <PlusOutlined />
-            创建数据集
-          </Button>,
+            <Button key="create" type="primary" onClick={handleCreateDataset}>
+              <PlusOutlined />
+              创建数据集
+            </Button>,
           ],
         }}
       />

@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { api } from "@/trpc/react";
-
+import logger from "@/utils/logger";
 import "@ant-design/v5-patch-for-react-19";
 
 /**
@@ -26,7 +26,7 @@ export default function RegisterPage() {
   // const { token } = theme.useToken();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const registerLogger = logger.child({ name: "REGISTER" });
   const registerMutation = api.auth.register.useMutation({
     onSuccess: () => {
       router.push("/login?registered=true");
@@ -54,6 +54,7 @@ export default function RegisterPage() {
     // 验证密码
     if (values.password !== values.confirmPassword) {
       setError("两次输入的密码不一致");
+      registerLogger.error("两次输入的密码不一致");
       setIsLoading(false);
       return;
     }
@@ -61,6 +62,7 @@ export default function RegisterPage() {
     // 验证密码强度
     if (values.password.length < 6) {
       setError("密码长度至少为6个字符");
+      registerLogger.error("密码长度至少为6个字符");
       setIsLoading(false);
       return;
     }
@@ -73,7 +75,7 @@ export default function RegisterPage() {
         inviteCode: values.inviteCode,
       });
     } catch (err) {
-      console.error("注册错误:", err);
+      registerLogger.error("注册错误:", err);
     }
   };
 

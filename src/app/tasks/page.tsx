@@ -159,7 +159,7 @@ export default function TasksPage() {
             <Button
             key="start"
             type="primary"
-            onClick={() => handleStartTask(record.id)}
+            onClick={() => handleStartTask(record.id, record.dataset.type === "OBJECT_DETECTION" ? "od" : "ocr")}
           >
             开始
           </Button>,

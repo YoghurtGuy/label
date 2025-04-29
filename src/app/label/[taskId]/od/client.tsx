@@ -1,15 +1,13 @@
 "use client";
 
-import { Button} from "antd";
-
 import AnnotationCanvas from "@/app/_components/AnnotationCanvas";
 import AnnotationList from "@/app/_components/AnnotationList";
+import ImageControl from "@/app/_components/ImageControl";
 import LabelSelector from "@/app/_components/LabelSelector";
 import type { Label } from "@/types/dataset";
 
-import { useImageAnnotation } from "./hooks";
-
-export default function LabelPage({
+import { useImageAnnotation } from "../hooks";
+export default function ObjectDetectionPage({
   taskId,
 }: {
   taskId: string
@@ -31,11 +29,13 @@ export default function LabelPage({
     saveAnnotations,
     nextImage,
     prevImage,
+    hasPrevImage,
+    hasNextImage,
     // getCurrentTool,
     // getCurrentColor,
   } = useImageAnnotation(taskId);
 
-  if (!taskId) {
+  if (!taskId||taskDetails?.dataset?.type !== "OBJECT_DETECTION") {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -95,17 +95,14 @@ export default function LabelPage({
         </div>
 
         <div className="md:col-span-1">
-          <div className="mb-4 flex items-center justify-between">
-            <Button onClick={prevImage} disabled={!currentImageId}>
-              上一张
-            </Button>
-            <Button type="primary" onClick={saveAnnotations} loading={isSaving}>
-              保存标注
-            </Button>
-            <Button onClick={nextImage} disabled={!currentImageId}>
-              下一张
-            </Button>
-          </div>
+          <ImageControl
+            prevImage={prevImage}
+            nextImage={nextImage}
+            hasPrevImage={hasPrevImage}
+            hasNextImage={hasNextImage}
+            saveAnnotations={saveAnnotations}
+            isSaving={isSaving}
+          />
           <div className="mb-4">
             <LabelSelector
               labels={datasetLabels ?? []}

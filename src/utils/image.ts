@@ -4,6 +4,10 @@ import path from 'path';
 
 import sharp from 'sharp';
 
+import logger from './logger';
+
+const imageLogger = logger.child({ name: "IMAGE" });
+
 export interface ImageMetadata {
   width: number;
   height: number;
@@ -98,12 +102,12 @@ export async function getImagesFromDirectory(dirPath: string): Promise<Array<{fi
               });
             }
           } catch (itemError) {
-            console.error(`处理文件 ${item} 时出错:`, itemError);
+            imageLogger.error(`处理文件 ${item} 时出错:`, itemError);
             // 继续处理下一个文件
           }
         }
       } catch (dirError) {
-        console.error(`处理目录 ${currentPath} 时出错:`, dirError);
+        imageLogger.error(`处理目录 ${currentPath} 时出错:`, dirError);
         throw dirError;
       }
     }
@@ -112,8 +116,10 @@ export async function getImagesFromDirectory(dirPath: string): Promise<Array<{fi
     return images;
   } catch (error) {
     if (error instanceof Error) {
+      imageLogger.error(`处理目录时出错: ${error.message}`);
       throw new Error(`处理目录时出错: ${error.message}`);
     }
+    imageLogger.error('处理目录时出现未知错误');
     throw new Error('处理目录时出现未知错误');
   }
 }
@@ -134,7 +140,7 @@ export async function processImages(images: Array<{filename: string, path: strin
         ...dimensions,
       });
     } catch (error) {
-      console.error(`处理图像失败: ${image.path}`, error);
+      imageLogger.error(`处理图像失败: ${image.path}`, error);
       // 跳过处理失败的图像
       continue;
     }

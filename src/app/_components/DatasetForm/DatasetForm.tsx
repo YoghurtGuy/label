@@ -18,7 +18,7 @@ import { Modal, Upload, Button, ColorPicker, Progress, message } from "antd";
 // import type { FormListFieldData } from "antd/es/form";
 import type { FormInstance } from "antd/es/form";
 
-// import { type Dataset } from "@/types/dataset";
+import { type CreateDatasetInput } from "@/types/dataset";
 
 import { useDatasetForm, type DatasetFormProps, DISTINCT_COLORS } from "./hooks";
 
@@ -52,11 +52,11 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
       destroyOnClose
       footer={null}
     >
-      <ProForm
+      <ProForm<CreateDatasetInput>
         layout="vertical"
         initialValues={{
           ...initialValues,
-          type: initialValues?.type ?? "OBJECT_DETECTION",
+          type: initialValues?.type ?? datasetType ?? "OBJECT_DETECTION",
           labels:
             initialValues?.labels?.map((label, index) => ({
               ...label,
@@ -64,7 +64,7 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
               color:
                 label.color || DISTINCT_COLORS[index % DISTINCT_COLORS.length],
             })) ?? [],
-          importMethod: "BROWSER_UPLOAD",
+          importMethod: "SERVER_FOLDER",
         }}
         onFinish={handleFormFinish}
         submitter={{
@@ -150,14 +150,24 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
             }}
           </ProFormList>
         )}
+        {
+          datasetType === "OCR" && (
+            <ProFormTextArea
+              name="prompts"
+              label="提示词"
+              placeholder="请输入提示词"
+              rules={[{ required: true, message: "请输入提示词" }]}
+            />
+          )
+        }
         {!initialValues && (
           <>
             <ProFormRadio.Group
               name="importMethod"
               label="图像导入方式"
               options={[
-                { label: "浏览器上传", value: "BROWSER_UPLOAD" },
                 { label: "服务器文件夹", value: "SERVER_FOLDER" },
+                { label: "浏览器上传（暂未支持）", value: "BROWSER_UPLOAD" },
               ]}
               rules={[{ required: true, message: "请选择图像导入方式" }]}
               fieldProps={{

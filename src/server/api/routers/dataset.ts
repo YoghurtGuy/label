@@ -11,9 +11,11 @@ import { env } from "@/env";
 import type { ImportProgress } from "@/types/import";
 import { getDirectoryTree } from "@/utils/fileSystem";
 import { getImagesFromDirectory, getImageMetadata } from "@/utils/image";
+import logger from "@/utils/logger";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 
+const datasetLogger = logger.child({ name: "DATASET" });
 // 创建一个事件发射器来处理进度更新
 const progressEmitter = new EventEmitter();
 
@@ -87,6 +89,11 @@ const datasetRouter = createTRPCRouter({
             (image) => image.annotations.length > 0,
           ).length;
 
+          // 获取已预标注的图像数量（有预标注的图像）
+          const preAnnotatedImageCount = dataset.images.filter(
+            (image) => image.annotations.find((annotation) => !!annotation.createdById),
+          ).length;
+
           // 获取标注总数
           const annotationCount = dataset.images.reduce(
             (total, image) => total + image.annotations.length,
@@ -99,6 +106,7 @@ const datasetRouter = createTRPCRouter({
               imageCount,
               annotatedImageCount,
               annotationCount,
+              preAnnotatedImageCount,
             },
           };
         }),
@@ -179,12 +187,13 @@ const datasetRouter = createTRPCRouter({
             description: z.string().optional().nullable(),
           }),
         ),
+        prompts: z.string().optional().nullable(),
         importMethod: z.enum(["BROWSER_UPLOAD", "SERVER_FOLDER"]),
         serverPath: z.string().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { labels, importMethod, serverPath, ...datasetData } = input;
+      const { labels, importMethod, serverPath, prompts, ...datasetData } = input;
 
       // 创建数据集
       const dataset = await ctx.db.dataset.create({
@@ -193,6 +202,7 @@ const datasetRouter = createTRPCRouter({
           description: datasetData.description,
           type: datasetData.type,
           createdById: ctx.session.user.id,
+          prompts: prompts,
         },
         include: {
           labels: true,
@@ -253,7 +263,7 @@ const datasetRouter = createTRPCRouter({
                 status: "processing",
               } as ImportProgress);
             } catch (error) {
-              console.error(`处理图像失败: ${imageFile.path}`, error);
+              datasetLogger.error(`处理图像失败: ${imageFile.path}`, error);
               failedFiles.push(imageFile.filename);
               continue;
             }
@@ -282,7 +292,7 @@ const datasetRouter = createTRPCRouter({
           await ctx.db.dataset.delete({
             where: { id: dataset.id },
           });
-
+          datasetLogger.error("导入图像失败", error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: error instanceof Error ? error.message : "导入图像时出错",
@@ -336,6 +346,7 @@ const datasetRouter = createTRPCRouter({
             }),
           )
           .optional(),
+        prompts: z.string().optional().nullable(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -370,6 +381,7 @@ const datasetRouter = createTRPCRouter({
           name: data.name,
           description: data.description,
           type: data.type,
+          prompts: data.prompts,
         },
         include: {
           labels: true,

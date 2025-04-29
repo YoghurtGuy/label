@@ -49,8 +49,8 @@ export const useTasks = () => {
     }
   };
 
-  const handleStartTask = (id: string) => {
-    router.push(`/label/${id}`);
+  const handleStartTask = (id: string, type: "od" | "ocr") => {
+    router.push(`/label/${id}/${type}`);
   };
 
   return {

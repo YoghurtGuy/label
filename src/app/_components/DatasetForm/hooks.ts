@@ -42,7 +42,7 @@ export interface DatasetFormProps {
 
 export const useDatasetForm = (props: DatasetFormProps) => {
   const { initialValues, onCancel, onSuccess } = props;
-  const [importMethod, setImportMethod] = useState<ImportMethod>("BROWSER_UPLOAD");
+  const [importMethod, setImportMethod] = useState<ImportMethod>("SERVER_FOLDER");
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [datasetType, setDatasetType] = useState<"OBJECT_DETECTION" | "OCR">(
     initialValues?.type ?? "OBJECT_DETECTION",
@@ -50,7 +50,6 @@ export const useDatasetForm = (props: DatasetFormProps) => {
   const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const colorIndexRef = useRef(0);
   const utils = api.useUtils();
-
   // 获取目录树
   const { data: directoryTreeData, isLoading: isLoadingDirectoryTree } = api.dataset.getDirectoryTree.useQuery(
     { path: "/", maxDepth: 5 },
@@ -62,6 +61,9 @@ export const useDatasetForm = (props: DatasetFormProps) => {
     if (initialValues?.labels && initialValues.labels.length > 0) {
       // 如果已有标签，将颜色索引设置为标签数量，这样新添加的标签会从下一个颜色开始
       colorIndexRef.current = initialValues.labels.length;
+    }
+    if (initialValues?.type) {
+      setDatasetType(initialValues.type);
     }
   }, [initialValues]);
 
@@ -122,8 +124,8 @@ export const useDatasetForm = (props: DatasetFormProps) => {
     },
   });
 
-  const handleFormFinish = async (values: unknown) => {
-    const formValues = values as CreateDatasetInput;
+  const handleFormFinish = async (values: CreateDatasetInput) => {
+    const formValues = values;
 
     const submitValues = {
       ...formValues,
@@ -141,6 +143,7 @@ export const useDatasetForm = (props: DatasetFormProps) => {
           description: submitValues.description,
           type: submitValues.type,
           labels: submitValues.labels,
+          prompts: submitValues.prompts,
         });
       } else {
         // 创建数据集
@@ -149,8 +152,10 @@ export const useDatasetForm = (props: DatasetFormProps) => {
           description: submitValues.description,
           type: submitValues.type,
           labels: submitValues.labels,
+          prompts: submitValues.prompts,
           importMethod: submitValues.importMethod,
           serverPath: submitValues.serverPath,
+
           // TODO：上传图像，新建文件夹
         });
       }

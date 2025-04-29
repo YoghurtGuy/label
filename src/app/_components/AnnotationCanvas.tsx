@@ -6,7 +6,7 @@ import { Canvas, FabricImage, Rect, Polygon, type FabricObject ,type TPointerEve
 
 import type { Annotation } from '@/types/annotation';
 import type { Label } from '@/types/dataset';
-
+import logger from '@/utils/logger';
 interface AnnotationCanvasProps {
   imageUrl: string;
   width: number;
@@ -46,6 +46,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   const defaultOpacity = 0.5;
   const defaultStrokeWidth = 2;
 
+  const canvasLogger = logger.child({ name: "CANVAS", imageUrl, width, height, label, selectedAnnotationId });
   // 当外部tool属性变化时更新
   useEffect(() => {
     finishPolygon();
@@ -89,8 +90,9 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
         
         void canvas.add(img);
         void canvas.renderAll();
+        canvasLogger.info('图像已加载');
       } catch (error) {
-        console.error('加载图像失败:', error);
+        canvasLogger.error('加载图像失败:', error);
       }
     })();
 
@@ -99,6 +101,7 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
       const currentObjectMap = objectMapRef;
       void canvas.dispose();
       currentObjectMap.current.clear();
+      canvasLogger.info('画布已清理');
     };
   }, [imageUrl, width, height]);
 
@@ -257,7 +260,11 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
     
     fabricCanvasRef.current.add(polygon);
     fabricCanvasRef.current.renderAll();
-    
+    canvasLogger.info('多边形已绘制', {
+      polygonPoints,
+      label,
+    });
+
     // 重置多边形点
     setPolygonPoints([]);
     setIsDrawing(false);

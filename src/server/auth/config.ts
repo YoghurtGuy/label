@@ -90,7 +90,6 @@ export const authConfig = {
             msg: "Error during authentication",
             error: err,
           });
-          console.error(err);
           return null;
         }
       },

@@ -337,6 +337,9 @@ export const imageRouter = createTRPCRouter({
                   order: 'asc'
                 }
               }
+            },
+            orderBy: {
+              createdAt: 'asc'
             }
           }
         },
@@ -397,7 +400,8 @@ export const imageRouter = createTRPCRouter({
           label: labelName,
           labelId: annotation.labelId ?? undefined,
           color: labelColor,
-          data
+          data,
+          ocrText: annotation.text ?? undefined,
         };
       });
       

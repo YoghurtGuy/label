@@ -1,6 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 
+import logger from './logger';
+
+const fileSystemLogger = logger.child({ name: "FILE_SYSTEM" });
 // 定义树节点类型
 export interface TreeNode {
   label: string;
@@ -60,7 +63,7 @@ export const getDirectoryTree = (dirPath: string, maxDepth = 3): TreeNode[] => {
       }
     });
   } catch (error) {
-    console.error('获取目录树失败:', error);
+    fileSystemLogger.error('获取目录树失败:', error);
     return [];
   }
 }; 

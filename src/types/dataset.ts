@@ -22,6 +22,7 @@ export interface Dataset {
   id: string;
   name: string;
   description: string | null;
+  prompts: string | null;
   createdAt: Date;
   updatedAt: Date;
   createdById: string;
@@ -32,6 +33,7 @@ export interface Dataset {
     imageCount: number;
     annotatedImageCount: number;
     annotationCount: number;
+    preAnnotatedImageCount: number;
   };
 }
 
@@ -42,6 +44,7 @@ export interface CreateDatasetInput {
   labels: Omit<Label, 'id'>[];
   importMethod: ImportMethod;
   serverPath?: string;
+  prompts?: string;
 }
 
 export interface UpdateDatasetInput extends Partial<Omit<CreateDatasetInput, 'importMethod' | 'serverPath'>> {
