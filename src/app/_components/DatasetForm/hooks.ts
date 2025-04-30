@@ -51,10 +51,10 @@ export const useDatasetForm = (props: DatasetFormProps) => {
   const colorIndexRef = useRef(0);
   const utils = api.useUtils();
   // 获取目录树
-  const { data: directoryTreeData, isLoading: isLoadingDirectoryTree } = api.dataset.getDirectoryTree.useQuery(
-    { path: "/", maxDepth: 5 },
-    { enabled: importMethod === "SERVER_FOLDER" }
-  );
+  // const { data: directoryTreeData, isLoading: isLoadingDirectoryTree } = api.dataset.getDirectoryTree.useQuery(
+  //   { path: "/", maxDepth: 5 },
+  //   { enabled: importMethod === "SERVER_FOLDER" && props.open }
+  // );
 
   // 初始化颜色索引
   useEffect(() => {
@@ -206,8 +206,8 @@ export const useDatasetForm = (props: DatasetFormProps) => {
     datasetType,
     importProgress,
     colorIndexRef,
-    directoryTreeData,
-    isLoadingDirectoryTree,
+    // directoryTreeData,
+    // isLoadingDirectoryTree,
     handleImportMethodChange,
     handleDatasetTypeChange,
     handleColorChange,
