@@ -9,7 +9,7 @@ import { z } from "zod";
 
 import { env } from "@/env";
 import type { ImportProgress } from "@/types/import";
-import { getDirectoryTree } from "@/utils/fileSystem";
+// import { getDirectoryTree } from "@/utils/fileSystem";
 import { getImagesFromDirectory, getImageMetadata } from "@/utils/image";
 // import logger from "@/utils/logger";
 
@@ -21,33 +21,33 @@ const progressEmitter = new EventEmitter();
 
 const datasetRouter = createTRPCRouter({
   // 获取目录树
-  getDirectoryTree: protectedProcedure
-    .input(
-      z.object({
-        path: z.string(),
-        maxDepth: z.number().min(1).max(5).default(3),
-      }),
-    )
-    .query(async ({ input }) => {
-      // 检查是否配置了服务器图像目录
-      if (!env.SERVER_IMAGES_DIR) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "服务器图像目录未配置",
-        });
-      }
-      try {
-        const fullPath = path.join(env.SERVER_IMAGES_DIR, input.path);
-        const tree = getDirectoryTree(fullPath, input.maxDepth);
-        return tree;
-      } catch (error) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "获取目录树失败",
-          cause: error,
-        });
-      }
-    }),
+  // getDirectoryTree: protectedProcedure
+  //   .input(
+  //     z.object({
+  //       path: z.string(),
+  //       maxDepth: z.number().min(1).max(5).default(3),
+  //     }),
+  //   )
+  //   .query(async ({ input }) => {
+  //     // 检查是否配置了服务器图像目录
+  //     if (!env.SERVER_IMAGES_DIR) {
+  //       throw new TRPCError({
+  //         code: "INTERNAL_SERVER_ERROR",
+  //         message: "服务器图像目录未配置",
+  //       });
+  //     }
+  //     try {
+  //       const fullPath = path.join(env.SERVER_IMAGES_DIR, input.path);
+  //       const tree = getDirectoryTree(fullPath, input.maxDepth);
+  //       return tree;
+  //     } catch (error) {
+  //       throw new TRPCError({
+  //         code: "INTERNAL_SERVER_ERROR",
+  //         message: "获取目录树失败",
+  //         cause: error,
+  //       });
+  //     }
+  //   }),
 
   // 获取数据集列表
   getAll: protectedProcedure
