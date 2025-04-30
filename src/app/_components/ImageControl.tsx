@@ -18,20 +18,20 @@ export default function ImageControl({
   hasNextImage: boolean;
 }) {
   // 键盘快捷键处理
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowLeft") {
-        prevImage();
-      } else if (e.key === "ArrowRight") {
-        nextImage();
-      }
-    };
+  // useEffect(() => {
+  //   const handleKeyDown = (e: KeyboardEvent) => {
+  //     if (e.key === "ArrowLeft") {
+  //       prevImage();
+  //     } else if (e.key === "ArrowRight") {
+  //       nextImage();
+  //     }
+  //   };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [prevImage, nextImage]);
+  //   window.addEventListener("keydown", handleKeyDown);
+  //   return () => {
+  //     window.removeEventListener("keydown", handleKeyDown);
+  //   };
+  // }, [prevImage, nextImage]);
   return (
     <div className="mb-4 flex items-center justify-between">
       <Button onClick={prevImage} disabled={!hasPrevImage}>
