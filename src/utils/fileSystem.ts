@@ -2,6 +2,7 @@ import 'server-only';
 import fs from 'fs';
 import path from 'path';
 
+import { env } from '@/env';
 // import logger from './logger';
 
 // const fileSystemLogger = logger.child({ name: "FILE_SYSTEM" });
@@ -10,7 +11,7 @@ export interface TreeNode {
   label: string;
   value: string;
   key: string;
-  isLeaf: boolean;
+  isLeaf?: boolean;
   children?: TreeNode[];
 }
 
@@ -44,22 +45,23 @@ export const getDirectoryTree = (dirPath: string, maxDepth = 3): TreeNode[] => {
       const fullPath = path.join(dirPath, item);
       const stats = fs.statSync(fullPath);
       
+      const relativePath = path.relative(env.SERVER_IMAGES_DIR ?? '', fullPath);
       if (stats.isDirectory()) {
         // 如果是目录，递归获取子目录
         return {
           label: item,
-          value: fullPath,
-          key: fullPath,
-          isLeaf: false,
+          value: relativePath,
+          key: relativePath,
+          // isLeaf: true,
           children: maxDepth > 0 ? getDirectoryTree(fullPath, maxDepth - 1) : [],
         };
       } else {
         // 如果是文件，只返回文件信息
         return {
           label: item,
-          value: fullPath,
-          key: fullPath,
-          isLeaf: true,
+          value: relativePath,
+          key: relativePath,
+          // isLeaf: true,
         };
       }
     });

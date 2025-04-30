@@ -33,6 +33,7 @@ export const useAssignTaskForm = (props: AssignTaskFormProps) => {
     onSuccess: async () => {
       message.success("任务分配成功");
       await utils.task.getAll.invalidate();
+      await utils.dataset.getById.invalidate();
       if (onSuccess) {
         onSuccess();
       }

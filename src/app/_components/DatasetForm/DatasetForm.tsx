@@ -12,8 +12,9 @@ import {
   ProFormRadio,
   ProFormList,
   ProFormGroup,
+  ProFormTreeSelect,
 } from "@ant-design/pro-components";
-import { Modal, Upload, Button, ColorPicker, Progress, message } from "antd";
+import { Modal, Upload, Button, ColorPicker, message } from "antd";
 // import type { Color } from "antd/es/color-picker";
 // import type { FormListFieldData } from "antd/es/form";
 import type { FormInstance } from "antd/es/form";
@@ -32,7 +33,9 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
     fileList,
     setFileList,
     datasetType,
-    importProgress,
+    // importProgress,
+    directoryTreeData,
+    isLoadingDirectoryTree,
     handleImportMethodChange,
     handleDatasetTypeChange,
     handleColorChange,
@@ -196,18 +199,20 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
             
             {/* TODO: 服务器文件夹展示 */}
             {importMethod === "SERVER_FOLDER" && (
-              <ProFormText
+              <ProFormTreeSelect
                 name="serverPath"
                 label="服务器文件夹路径"
-                placeholder="请输入服务器文件夹路径"
+                placeholder="请选择服务器文件夹路径"
                 fieldProps={{
                   prefix: <FolderOutlined />,
+                  loading: isLoadingDirectoryTree,
+                  treeData: directoryTreeData,
                 }}
-                rules={[{ required: true, message: "请输入服务器文件夹路径" }]}
+                rules={[{ required: true, message: "请选择服务器文件夹路径" }]}
               />
             )}
 
-            {importProgress && (
+            {/* {importProgress && (
               <div style={{ marginTop: 16 }}>
                 <Progress
                   percent={Math.round(
@@ -229,7 +234,7 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
                   )}
                 </div>
               </div>
-            )}
+            )} */}
           </>
         )}
       </ProForm>

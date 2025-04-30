@@ -65,6 +65,7 @@ export async function GET(
     }
 
     const fullPath = path.join(env.SERVER_IMAGES_DIR, image.path);
+    console.log("fullPath", fullPath, image.path, env.SERVER_IMAGES_DIR);
     
     try {
       // 检查是否为文件

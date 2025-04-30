@@ -5,6 +5,7 @@ import path from 'path';
 
 import sharp from 'sharp';
 
+import { env } from '@/env';
 // import logger from './logger';
 
 // const imageLogger = logger.child({ name: "IMAGE" });
@@ -76,8 +77,8 @@ export function isImageFile(filename: string): boolean {
  * @param dirPath 目录路径
  * @returns Promise<Array<{filename: string, path: string}>>
  */
-export async function getImagesFromDirectory(dirPath: string): Promise<Array<{filename: string, path: string}>> {
-  const images: Array<{filename: string, path: string}> = [];
+export async function getImagesFromDirectory(dirPath: string): Promise<Array<{filename: string, path: string,width: number,height: number}>> {
+  const images: Array<{filename: string, path: string,width: number,height: number}> = [];
   
   try {
     const exists = await fs.access(dirPath).then(() => true).catch(() => false);
@@ -97,9 +98,12 @@ export async function getImagesFromDirectory(dirPath: string): Promise<Array<{fi
             if (stat.isDirectory()) {
               await processDirectory(fullPath);
             } else if (stat.isFile() && isImageFile(item)) {
+              const metadata = await getImageMetadata(fullPath);
               images.push({
                 filename: item,
-                path: fullPath,
+                path: path.relative(env.SERVER_IMAGES_DIR, fullPath),
+                width: metadata.width,
+                height: metadata.height,
               });
             }
           } catch (itemError) {

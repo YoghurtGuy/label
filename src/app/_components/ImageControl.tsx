@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+// import { useEffect } from "react";
 
 import { Button } from "antd";
 export default function ImageControl({

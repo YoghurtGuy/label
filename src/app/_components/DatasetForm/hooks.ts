@@ -1,17 +1,18 @@
 import { useState, useRef, useEffect } from "react";
 
-import { type TRPCClientErrorLike } from "@trpc/client";
-import { message } from "antd";
+import { App } from "antd";
 import { type Color } from "antd/es/color-picker";
 import { type FormInstance } from "antd/es/form";
 import { type RadioChangeEvent } from "antd/es/radio";
 import { type UploadFile } from "antd/es/upload/interface";
 
-import { type AppRouter } from "@/server/api/root";
 import { api } from "@/trpc/react";
-import { type Dataset, type Label, type ImportMethod, type CreateDatasetInput } from "@/types/dataset";
-import { type ImportProgress } from "@/types/import";
-
+import {
+  type Dataset,
+  type Label,
+  type ImportMethod,
+  type CreateDatasetInput,
+} from "@/types/dataset";
 
 // 预定义的颜色数组，这些颜色经过精心选择，彼此之间差异较大
 export const DISTINCT_COLORS = [
@@ -42,20 +43,46 @@ export interface DatasetFormProps {
 
 export const useDatasetForm = (props: DatasetFormProps) => {
   const { initialValues, onCancel, onSuccess } = props;
-  const [importMethod, setImportMethod] = useState<ImportMethod>("SERVER_FOLDER");
+  const [importMethod, setImportMethod] =
+    useState<ImportMethod>("SERVER_FOLDER");
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const [datasetType, setDatasetType] = useState<"OBJECT_DETECTION" | "OCR">(
     initialValues?.type ?? "OBJECT_DETECTION",
   );
-  const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
+  // const [subscriptionDatasetId, setSubscriptionDatasetId] = useState<string | null>(null);
+  // const [importProgress, setImportProgress] = useState<ImportProgress | null>(null);
   const colorIndexRef = useRef(0);
   const utils = api.useUtils();
+  const app = App.useApp();
   // 获取目录树
-  // const { data: directoryTreeData, isLoading: isLoadingDirectoryTree } = api.dataset.getDirectoryTree.useQuery(
-  //   { path: "/", maxDepth: 5 },
-  //   { enabled: importMethod === "SERVER_FOLDER" && props.open }
-  // );
+  const { data: directoryTreeData, isLoading: isLoadingDirectoryTree } =
+    api.dataset.getDirectoryTree.useQuery(
+      { path: "/", maxDepth: 5 },
+      { enabled: importMethod === "SERVER_FOLDER" && props.open },
+    );
 
+  // 订阅导入进度
+  // api.dataset.onImportProgress.useSubscription(subscriptionDatasetId!, {
+  //   onData: (progress: ImportProgress) => {
+  //     setImportProgress(progress);
+  //     if (progress.status === "completed") {
+  //       message.success("导入完成");
+  //       onCancel();
+  //       setSubscriptionDatasetId(null);
+  //       setImportProgress(null);
+  //     } else if (progress.status === "error") {
+  //       message.error(progress.error ?? "导入失败");
+  //       setImportProgress(null);
+  //       setSubscriptionDatasetId(null);
+  //     }
+  //   },
+  //   onError: (err: TRPCClientErrorLike<AppRouter>) => {
+  //     message.error(err.message);
+  //     setImportProgress(null);
+  //     setSubscriptionDatasetId(null);
+  //   },
+  //   enabled: !!subscriptionDatasetId,
+  // })
   // 初始化颜色索引
   useEffect(() => {
     if (initialValues?.labels && initialValues.labels.length > 0) {
@@ -75,7 +102,11 @@ export const useDatasetForm = (props: DatasetFormProps) => {
     setDatasetType(e.target.value as "OBJECT_DETECTION" | "OCR");
   };
 
-  const handleColorChange = (color: Color, index: number, form: FormInstance) => {
+  const handleColorChange = (
+    color: Color,
+    index: number,
+    form: FormInstance,
+  ) => {
     const labels = form.getFieldValue("labels") as Omit<Label, "id">[];
     if (labels[index]) {
       labels[index].color = color.toHexString();
@@ -85,8 +116,10 @@ export const useDatasetForm = (props: DatasetFormProps) => {
 
   // 获取下一个不相似的颜色
   const getNextDistinctColor = () => {
-    const color = DISTINCT_COLORS[colorIndexRef.current % DISTINCT_COLORS.length];
-    colorIndexRef.current = (colorIndexRef.current + 1) % DISTINCT_COLORS.length;
+    const color =
+      DISTINCT_COLORS[colorIndexRef.current % DISTINCT_COLORS.length];
+    colorIndexRef.current =
+      (colorIndexRef.current + 1) % DISTINCT_COLORS.length;
     return color;
   };
 
@@ -103,7 +136,7 @@ export const useDatasetForm = (props: DatasetFormProps) => {
   // 创建数据集
   const createDataset = api.dataset.create.useMutation({
     onSuccess: async () => {
-      message.success("数据集创建成功");
+      app.message.success("数据集创建成功");
       await utils.dataset.getAll.invalidate();
       if (onSuccess) {
         onSuccess();
@@ -115,7 +148,7 @@ export const useDatasetForm = (props: DatasetFormProps) => {
   // 更新数据集
   const updateDataset = api.dataset.update.useMutation({
     onSuccess: async () => {
-      message.success("数据集更新成功");
+      app.message.success("数据集更新成功");
       await utils.dataset.getAll.invalidate();
       if (onSuccess) {
         onSuccess();
@@ -134,7 +167,7 @@ export const useDatasetForm = (props: DatasetFormProps) => {
 
     try {
       let result;
-      
+
       if (initialValues?.id) {
         // 更新数据集
         result = await updateDataset.mutateAsync({
@@ -161,35 +194,21 @@ export const useDatasetForm = (props: DatasetFormProps) => {
       }
 
       if (!result) {
-        throw new Error(initialValues?.id ? "更新数据集失败" : "创建数据集失败");
+        throw new Error(
+          initialValues?.id ? "更新数据集失败" : "创建数据集失败",
+        );
       }
 
       // 如果是服务器文件夹导入，订阅进度更新
-      if (formValues.importMethod === "SERVER_FOLDER" && result?.id) {
-        api.dataset.onImportProgress.useSubscription(result.id, {
-          onData: (progress: ImportProgress) => {
-            setImportProgress(progress);
-            if (progress.status === "completed") {
-              message.success("导入完成");
-              onCancel();
-              setImportProgress(null);
-            } else if (progress.status === "error") {
-              message.error(progress.error ?? "导入失败");
-              setImportProgress(null);
-            }
-          },
-          onError: (err: TRPCClientErrorLike<AppRouter>) => {
-            message.error(err.message);
-            setImportProgress(null);
-          },
-        });
-      } else {
-        onCancel();
-      }
+      // if (formValues.importMethod === "SERVER_FOLDER" && result?.id) {
+      //   setSubscriptionDatasetId(result.id);
+      // } else {
+      //   onCancel();
+      // }
       return true;
     } catch (error) {
       if (error instanceof Error) {
-        message.error(error.message);
+        app.message.error(error.message);
       }
       return false;
     }
@@ -204,10 +223,10 @@ export const useDatasetForm = (props: DatasetFormProps) => {
     fileList,
     setFileList,
     datasetType,
-    importProgress,
+    // importProgress,
     colorIndexRef,
-    // directoryTreeData,
-    // isLoadingDirectoryTree,
+    directoryTreeData,
+    isLoadingDirectoryTree,
     handleImportMethodChange,
     handleDatasetTypeChange,
     handleColorChange,
@@ -215,4 +234,4 @@ export const useDatasetForm = (props: DatasetFormProps) => {
     handleFormFinish,
     handleCancel,
   };
-}; 
+};
