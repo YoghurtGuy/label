@@ -95,17 +95,17 @@ model Image {
     dataset     Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
     datasetId   String
     annotations Annotation[]
-    task        AnnotationTask? @relation(fields: [taskId], references: [id])
-    taskId      String?
+    taskOnImage TaskOnImage[]
 
     @@index([filename])
+    @@index([datasetId])
 }
 
 model AnnotationTask {
     id          String   @id @default(cuid())
     name        String
     description String?
-    status      TaskStatus @default(PENDING)
+    // status      TaskStatus @default(PENDING)
     // progress    Float    @default(0)
     createdAt   DateTime @default(now())
     updatedAt   DateTime @updatedAt
@@ -115,10 +115,10 @@ model AnnotationTask {
     assignedToId String?
     dataset     Dataset  @relation(fields: [datasetId], references: [id])
     datasetId   String
-    images      Image[]
-    annotations Annotation[]
+    taskOnImage TaskOnImage[]
+    // annotations Annotation[]
 
-    @@index([status])
+    @@index([datasetId])
 }
 
 model Annotation {
@@ -134,11 +134,11 @@ model Annotation {
     createdById String?
     image       Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
     imageId     String
-    task        AnnotationTask? @relation(fields: [taskId], references: [id])
-    taskId      String?
+    // task        AnnotationTask? @relation(fields: [taskId], references: [id])
+    // taskId      String?
     points      Point[]  // 用于矩形和多边形标注的点位
 
-    @@index([type])
+    @@index([imageId])
 }
 
 model Point {
@@ -152,12 +152,12 @@ model Point {
     @@index([annotationId, order])
 }
 
-enum TaskStatus {
-    PENDING
-    IN_PROGRESS
-    COMPLETED
-    REVIEWING
-}
+// enum TaskStatus {
+//     PENDING
+//     IN_PROGRESS
+//     COMPLETED
+//     REVIEWING
+// }
 
 enum AnnotationType {
     RECTANGLE
@@ -189,5 +189,13 @@ model Label {
     annotations Annotation[]  // 使用该标签的标注
 
     @@unique([name, datasetId])  // 确保在同一数据集中标签名称唯一
-    @@index([name])
+    @@index([datasetId])
+}
+
+model TaskOnImage {
+    taskId String
+    imageId String
+    task AnnotationTask @relation(fields: [taskId], references: [id])
+    image Image @relation(fields: [imageId], references: [id])
+    @@id([taskId, imageId])
 }

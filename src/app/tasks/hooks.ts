@@ -28,20 +28,11 @@ export const useTasks = () => {
     },
   });
 
-  const updateTaskStatus = api.task.updateStatus.useMutation({
-    onSuccess: async () => {
-      message.success("任务状态更新成功");
-      await utils.task.getAll.invalidate();
-    },
-  });
 
   const handleDeleteTask = (id: string) => {
     deleteTask.mutate(id);
   };
 
-  const handleUpdateTaskStatus = (id: string, status: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "REVIEWING") => {
-    updateTaskStatus.mutate({ id, status });
-  };
 
   const handleMenuChange = (key: Key | undefined) => {
     if (key) {
@@ -59,7 +50,6 @@ export const useTasks = () => {
     isLoading,
     session,
     handleDeleteTask,
-    handleUpdateTaskStatus,
     handleMenuChange,
     handleStartTask,
   };

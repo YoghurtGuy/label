@@ -16,7 +16,6 @@ export default function TasksPage() {
     isLoading,
     session,
     handleDeleteTask,
-    // handleUpdateTaskStatus,
     handleMenuChange,
     handleStartTask,
   } = useTasks();
@@ -29,38 +28,6 @@ export default function TasksPage() {
       return task.creatorId === session.data?.user.id;
     }
   });
-
-  // 获取任务状态对应的颜色
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "default";
-      case "IN_PROGRESS":
-        return "processing";
-      case "COMPLETED":
-        return "success";
-      case "REVIEWING":
-        return "warning";
-      default:
-        return "default";
-    }
-  };
-
-  // 获取任务状态对应的文本
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case "PENDING":
-        return "待处理";
-      case "IN_PROGRESS":
-        return "进行中";
-      case "COMPLETED":
-        return "已完成";
-      case "REVIEWING":
-        return "审核中";
-      default:
-        return "未知";
-    }
-  };
 
   return (
     <>
@@ -85,9 +52,6 @@ export default function TasksPage() {
               <div>
                 <Tag color={record.dataset.type === "OBJECT_DETECTION" ? "blue" : "green"}>
                   {record.dataset.type === "OBJECT_DETECTION" ? "目标检测" : "OCR识别"}
-                </Tag>
-                <Tag color={getStatusColor(record.status)}>
-                  {getStatusText(record.status)}
                 </Tag>
                 {activeKey === "created" && (
                   <Tag color="green">
@@ -133,18 +97,6 @@ export default function TasksPage() {
           actions: {
             render: (_, record) => 
             activeKey === "created" ?[
-            //   <Select
-            //     key="status"
-            //     defaultValue={record.status}
-            //     style={{ width: 120 }}
-            //     onChange={(value) => handleUpdateTaskStatus(record.id, value)}
-            //     options={[
-            //       { value: "PENDING", label: "待处理" },
-            //       { value: "IN_PROGRESS", label: "进行中" },
-            //       { value: "COMPLETED", label: "已完成" },
-            //       { value: "REVIEWING", label: "审核中" },
-            //     ]}
-            //   />,
             <Popconfirm
                 key="delete"
                 title="确认删除"

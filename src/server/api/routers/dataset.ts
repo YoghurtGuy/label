@@ -53,18 +53,18 @@ const datasetRouter = createTRPCRouter({
   getAll: protectedProcedure
     .input(
       z.object({
-        limit: z.number().min(1).max(100).default(10),
-        cursor: z.string().nullish(),
+        pageSize: z.number().min(1).max(100).default(10),
+        page: z.number().min(1).default(1),
       }),
     )
     .query(async ({ ctx, input }) => {
-      const { limit, cursor } = input;
+      const { pageSize, page } = input;
       const items = await ctx.db.dataset.findMany({
-        take: limit + 1,
+        take: pageSize,
         where: {
           createdById: ctx.session.user.id,
         },
-        cursor: cursor ? { id: cursor } : undefined,
+        skip: (page - 1) * pageSize,
         orderBy: {
           createdAt: "desc",
         },
@@ -83,6 +83,7 @@ const datasetRouter = createTRPCRouter({
         items.map(async (dataset) => {
           // 获取图像总数
           const imageCount = dataset.images.length;
+          const annotations = dataset.images.flatMap((image) => image.annotations);
 
           // 获取已标注的图像数量（有标注的图像）
           const annotatedImageCount = dataset.images.filter(
@@ -90,15 +91,12 @@ const datasetRouter = createTRPCRouter({
           ).length;
 
           // 获取已预标注的图像数量（有预标注的图像）
-          const preAnnotatedImageCount = dataset.images.filter(
-            (image) => image.annotations.find((annotation) => !annotation.createdById),
+          const preAnnotatedImageCount = annotations.filter(
+            (annotation) => !annotation.createdById,
           ).length;
 
           // 获取标注总数
-          const annotationCount = dataset.images.reduce(
-            (total, image) => total + image.annotations.filter((annotation) => !!annotation.createdById).length,
-            0,
-          );
+          const annotationCount = annotations.length;
 
           return {
             ...dataset,
@@ -112,15 +110,7 @@ const datasetRouter = createTRPCRouter({
         }),
       );
 
-      let nextCursor: typeof cursor | undefined = undefined;
-      if (itemsWithStats.length > limit) {
-        const nextItem = itemsWithStats.pop();
-        nextCursor = nextItem!.id;
-      }
-      return {
-        items: itemsWithStats,
-        nextCursor,
-      };
+      return itemsWithStats;
     }),
 
   // 获取单个数据集
@@ -136,6 +126,7 @@ const datasetRouter = createTRPCRouter({
           labels: true,
           images: {
             include: {
+              taskOnImage: true,
               annotations: {
                 where: {
                   createdById: {
@@ -165,7 +156,7 @@ const datasetRouter = createTRPCRouter({
         if (!image.annotations.length) {
           unannotatedImageIndex.push(index);
         }
-        if (!image.taskId) {
+        if (!image.taskOnImage.length) {
           unassignedImageIndex.push(index);
         }
       });
@@ -450,6 +441,9 @@ const datasetRouter = createTRPCRouter({
           where: { datasetId: input },
         });
         await tx.annotation.deleteMany({
+          where: { image: { datasetId: input } },
+        });
+        await tx.taskOnImage.deleteMany({
           where: { image: { datasetId: input } },
         });
         await tx.image.deleteMany({

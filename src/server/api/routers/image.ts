@@ -21,7 +21,11 @@ export const imageRouter = createTRPCRouter({
         },
         include: {
           annotations: true,
-          task: true,
+          taskOnImage: {
+            include: {
+              task: true,
+            },
+          },
         },
       });
       
@@ -31,7 +35,7 @@ export const imageRouter = createTRPCRouter({
           message: "图像不存在",
         });
       }
-      if (image.task?.assignedToId !== ctx.session.user.id) {
+      if (!image.taskOnImage.some(taskOnImage => taskOnImage.task.assignedToId === ctx.session.user.id)) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "您没有权限访问此图像",
@@ -239,7 +243,11 @@ export const imageRouter = createTRPCRouter({
       // 检查图像是否存在
       const image = await ctx.db.image.findUnique({
         where: { id: imageId },
-        include: { task: true },
+        include: { taskOnImage: {
+          include: {
+            task: true,
+          },
+        } },
       });
       
       if (!image) {
@@ -250,7 +258,7 @@ export const imageRouter = createTRPCRouter({
       }
       
       // 检查用户是否有权限标注此图像
-      if (image.task?.assignedToId !== ctx.session.user.id) {
+      if (!image.taskOnImage.some(taskOnImage => taskOnImage.task.assignedToId === ctx.session.user.id)) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "您没有权限标注此图像",
@@ -289,7 +297,7 @@ export const imageRouter = createTRPCRouter({
               text,
               createdById: ctx.session.user.id,
               imageId,
-              taskId: image.taskId!,
+              // taskId: image.taskId!,
               points: {
                 create: points.map((point) => ({
                   x: point.x,
@@ -301,14 +309,6 @@ export const imageRouter = createTRPCRouter({
           });
           
           createdAnnotations.push(createdAnnotation);
-        }
-        
-        // 更新任务状态为进行中
-        if (image.taskId) {
-          await tx.annotationTask.update({
-            where: { id: image.taskId },
-            data: { status: "IN_PROGRESS" },
-          });
         }
         
         return {
@@ -328,7 +328,11 @@ export const imageRouter = createTRPCRouter({
       const image = await ctx.db.image.findUnique({
         where: { id: imageId },
         include: { 
-          task: true,
+          taskOnImage: {
+            include: {
+              task: true,
+            },
+          },
           annotations: {
             include: {
               label: true,
@@ -353,7 +357,7 @@ export const imageRouter = createTRPCRouter({
       }
       
       // 检查用户是否有权限访问此图像
-      if (image.task?.assignedToId !== ctx.session.user.id) {
+      if (!image.taskOnImage.some(taskOnImage => taskOnImage.task.assignedToId === ctx.session.user.id)) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "您没有权限访问此图像",

@@ -21,7 +21,8 @@ export const useDatasets = () => {
   const session = useSession();
 
   const { data: datasetsData, isLoading } = api.dataset.getAll.useQuery({
-    limit: 10,
+    pageSize: 10,
+    page: 1,
   });
 
   const deleteDataset = api.dataset.delete.useMutation({

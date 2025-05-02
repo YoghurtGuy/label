@@ -14,7 +14,7 @@ export const taskRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const { limit, cursor } = input;
-      const items = await ctx.db.annotationTask.findMany({
+      const tasks = await ctx.db.annotationTask.findMany({
         take: limit + 1,
         where: {
           OR: [
@@ -46,27 +46,31 @@ export const taskRouter = createTRPCRouter({
               type: true,
             },
           },
-          images: {
+          taskOnImage: {
             include: {
-              annotations: true,
+              image: {
+                include: {
+                  annotations: true,
+                },
+              },
             },
           },
         },
       });
 
       // 处理每个任务，添加统计信息
-      const itemsWithStats = items.map((task) => {
+      const itemsWithStats = tasks.map((task) => {
         // 获取图像总数
-        const imageCount = task.images.length;
+        const imageCount = task.taskOnImage.length;
 
         // 获取已标注的图像数量（有标注的图像）
-        const annotatedImageCount = task.images.filter(
-          (image) => image.annotations.length > 0,
+        const annotatedImageCount = task.taskOnImage.filter(
+          (toi) => toi.image.annotations.length > 0,
         ).length;
 
         // 获取标注总数
-        const annotationCount = task.images.reduce(
-          (total, image) => total + image.annotations.length,
+        const annotationCount = task.taskOnImage.reduce(
+          (total, toi) => total + toi.image.annotations.length,
           0,
         );
 
@@ -125,9 +129,13 @@ export const taskRouter = createTRPCRouter({
               labels: true,
             },
           },
-          images: {
+          taskOnImage: {
             include: {
-              annotations: true,
+              image: {
+                include: {
+                  annotations: true,
+                },
+              },
             },
           },
         },
@@ -141,12 +149,12 @@ export const taskRouter = createTRPCRouter({
       }
 
       // 添加统计信息
-      const imageCount = task.images.length;
-      const annotatedImageCount = task.images.filter(
-        (image) => image.annotations.length > 0,
+      const imageCount = task.taskOnImage.length;
+      const annotatedImageCount = task.taskOnImage.filter(
+        (toi) => toi.image.annotations.length > 0,
       ).length;
-      const annotationCount = task.images.reduce(
-        (total, image) => total + image.annotations.length,
+      const annotationCount = task.taskOnImage.reduce(
+        (total, toi) => total + toi.image.annotations.length,
         0,
       );
 
@@ -229,36 +237,37 @@ export const taskRouter = createTRPCRouter({
             data: {
               name,
               description,
-              status: "PENDING",
               creatorId: ctx.session.user.id,
               assignedToId: assign.userId,
               datasetId,
-              images: {
-                connect: images.map((image) => ({ id: image.id })),
+              taskOnImage: {
+                create: images.map((image) => ({
+                  imageId: image.id,
+                })),
               },
             },
-            include: {
-              creator: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-              assignedTo: {
-                select: {
-                  id: true,
-                  name: true,
-                },
-              },
-              dataset: {
-                select: {
-                  id: true,
-                  name: true,
-                  type: true,
-                },
-              },
-              images: true,
-            },
+            // include: {
+            //   creator: {
+            //     select: {
+            //       id: true,
+            //       name: true,
+            //     },
+            //   },
+            //   assignedTo: {
+            //     select: {
+            //       id: true,
+            //       name: true,
+            //     },
+            //   },
+            //   dataset: {
+            //     select: {
+            //       id: true,
+            //       name: true,
+            //       type: true,
+            //     },
+            //   },
+            //   taskOnImage: true,
+            // },
           });
         }
       });
@@ -275,11 +284,10 @@ export const taskRouter = createTRPCRouter({
         description: z.string(),
         datasetId: z.string(),
         assignedToId: z.string(),
-        status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "REVIEWING"]),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { id, name, description, datasetId, assignedToId, status } = input;
+      const { id, name, description, datasetId, assignedToId } = input;
 
       // 检查任务是否存在
       const task = await ctx.db.annotationTask.findFirst({
@@ -304,7 +312,6 @@ export const taskRouter = createTRPCRouter({
           description,
           datasetId,
           assignedToId,
-          status,
         },
         include: {
           creator: {
@@ -333,62 +340,62 @@ export const taskRouter = createTRPCRouter({
     }),
 
   // 更新任务状态
-  updateStatus: protectedProcedure
-    .input(
-      z.object({
-        id: z.string(),
-        status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "REVIEWING"]),
-      }),
-    )
-    .mutation(async ({ ctx, input }) => {
-      const { id, status } = input;
+  // updateStatus: protectedProcedure
+  //   .input(
+  //     z.object({
+  //       id: z.string(),
+  //       status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "REVIEWING"]),
+  //     }),
+  //   )
+  //   .mutation(async ({ ctx, input }) => {
+  //     const { id, status } = input;
 
-      const task = await ctx.db.annotationTask.findFirst({
-        where: {
-          id,
-          OR: [
-            { creatorId: ctx.session.user.id },
-            { assignedToId: ctx.session.user.id },
-          ],
-        },
-      });
+  //     const task = await ctx.db.annotationTask.findFirst({
+  //       where: {
+  //         id,
+  //         OR: [
+  //           { creatorId: ctx.session.user.id },
+  //           { assignedToId: ctx.session.user.id },
+  //         ],
+  //       },
+  //     });
 
-      if (!task) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "任务不存在",
-        });
-      }
+  //     if (!task) {
+  //       throw new TRPCError({
+  //         code: "NOT_FOUND",
+  //         message: "任务不存在",
+  //       });
+  //     }
 
-      // 更新任务状态
-      const updatedTask = await ctx.db.annotationTask.update({
-        where: { id },
-        data: { status },
-        include: {
-          creator: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          assignedTo: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
-          dataset: {
-            select: {
-              id: true,
-              name: true,
-              type: true,
-            },
-          },
-        },
-      });
+  //     // 更新任务状态
+  //     const updatedTask = await ctx.db.annotationTask.update({
+  //       where: { id },
+  //       data: { status },
+  //       include: {
+  //         creator: {
+  //           select: {
+  //             id: true,
+  //             name: true,
+  //           },
+  //         },
+  //         assignedTo: {
+  //           select: {
+  //             id: true,
+  //             name: true,
+  //           },
+  //         },
+  //         dataset: {
+  //           select: {
+  //             id: true,
+  //             name: true,
+  //             type: true,
+  //           },
+  //         },
+  //       },
+  //     });
 
-      return updatedTask;
-    }),
+  //     return updatedTask;
+  //   }),
 
   // 删除任务
   delete: protectedProcedure
@@ -412,9 +419,15 @@ export const taskRouter = createTRPCRouter({
           message: "无权限删除任务",
         });
       }
-
-      await ctx.db.annotationTask.delete({
-        where: { id: input },
+      await ctx.db.$transaction(async (tx) => {
+        await tx.taskOnImage.deleteMany({
+          where: {
+            taskId: input,
+          },
+        });
+        await tx.annotationTask.delete({
+          where: { id: input },
+        });
       });
 
       return { success: true };
@@ -424,7 +437,11 @@ export const taskRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const images = await ctx.db.image.findMany({
         where: {
-          taskId: input,
+          taskOnImage: {
+            some: {
+              taskId: input,
+            },
+          },
         },
         include: {
           annotations: true,

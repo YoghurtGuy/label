@@ -101,7 +101,6 @@ export const createAnnotationFromImageUrl = async (imageUrl, text, userId, taskI
         status: 'PENDING',
         imageId: image.id,
         createdById: userId || undefined,
-        taskId: taskId || undefined
       }
     });
 

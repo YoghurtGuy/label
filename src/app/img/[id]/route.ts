@@ -37,7 +37,11 @@ export async function GET(
         id: imageId,
       },
       include: {
-        task: true,
+        taskOnImage: {
+          include: {
+            task: true,
+          },
+        },
       },
     });
     
@@ -50,7 +54,7 @@ export async function GET(
     }
     
     // 检查权限：只有被分配任务的用户才能访问图片
-    if (image.task?.assignedToId !== session.user.id) {
+    if (!image.taskOnImage.some(toi => toi.task.assignedToId === session.user.id)) {
       // imageLogger.error("您没有权限访问此图片", {
       //   imageId,
       //   userId: session.user.id,

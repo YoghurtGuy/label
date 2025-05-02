@@ -39,8 +39,8 @@ export default function DatasetsPage() {
         rowKey="id"
         dataSource={
           activeKey === "all"
-            ? datasetsData?.items
-            : datasetsData?.items.filter(
+            ? datasetsData
+            : datasetsData?.filter(
                 (item) => item.createdById === session.data?.user.id,
               )
         }
@@ -154,7 +154,7 @@ export default function DatasetsPage() {
                   <span>
                     全部数据集
                     {renderBadge(
-                      datasetsData?.items.length ?? 0,
+                      datasetsData?.length ?? 0,
                       activeKey === "all",
                     )}
                   </span>
@@ -166,7 +166,7 @@ export default function DatasetsPage() {
                   <span>
                     我创建的数据集
                     {renderBadge(
-                      datasetsData?.items.filter(
+                      datasetsData?.filter(
                         (item) => item.createdById === session.data?.user.id,
                       ).length ?? 0,
                       activeKey === "mine",
@@ -192,7 +192,7 @@ export default function DatasetsPage() {
         onSuccess={handleFormClose}
         initialValues={
           editingDatasetId
-            ? datasetsData?.items.find((item) => item.id === editingDatasetId)
+            ? datasetsData?.find((item) => item.id === editingDatasetId)
             : undefined
         }
         title={editingDatasetId ? "编辑数据集" : "创建数据集"}
