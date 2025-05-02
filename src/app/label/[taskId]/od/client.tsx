@@ -1,5 +1,7 @@
 "use client";
 
+import { Spin } from "antd";
+
 import AnnotationCanvas from "@/app/_components/AnnotationCanvas";
 import AnnotationList from "@/app/_components/AnnotationList";
 import ImageControl from "@/app/_components/ImageControl";
@@ -22,6 +24,7 @@ export default function ObjectDetectionPage({
     taskDetails,
     currentLabelInfo,
     isSaving,
+    // isLoading,
     handleAnnotationChange,
     handleSelectAnnotation,
     handleSelectLabel,
@@ -31,11 +34,12 @@ export default function ObjectDetectionPage({
     prevImage,
     hasPrevImage,
     hasNextImage,
-    // getCurrentTool,
-    // getCurrentColor,
+    currentImageIndex,
+    imageCount,
+    handleImageChange,
   } = useImageAnnotation(taskId);
 
-  if (!taskId||taskDetails?.dataset?.type !== "OBJECT_DETECTION") {
+  if (!taskId||(taskDetails&&taskDetails.dataset?.type !== "OBJECT_DETECTION")) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -54,16 +58,16 @@ export default function ObjectDetectionPage({
   //   );
   // }
 
-  // if (imageList.length === 0) {
-  //   return (
-  //     <div className="flex h-screen items-center justify-center">
-  //       <div className="text-center">
-  //         <h1 className="mb-4 text-2xl font-bold text-gray-500">暂无图像</h1>
-  //         <p className="text-gray-600">该任务下没有可标注的图像</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
+  if (taskDetails&&imageList.length === 0) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-center">
+          <h1 className="mb-4 text-2xl font-bold text-gray-500">暂无图像</h1>
+          <p className="text-gray-600">该任务下没有可标注的图像</p>
+        </div>
+      </div>
+    );
+  }
 
   const currentImage = imageList.find((img) => img.id === currentImageId);
   const imageUrl = currentImage ? `/img/${currentImage.id}` : "";
@@ -88,9 +92,9 @@ export default function ObjectDetectionPage({
               />
             </div>
           ) : (
-            <div className="rounded-lg bg-gray-100 p-8 text-center">
-              <p className="text-gray-500">加载中...</p>
-            </div>
+            <div className="flex h-screen items-center justify-center">
+         <Spin size="large" tip="加载中..." />
+       </div>
           )}
         </div>
 
@@ -102,6 +106,9 @@ export default function ObjectDetectionPage({
             hasNextImage={hasNextImage}
             saveAnnotations={saveAnnotations}
             isSaving={isSaving}
+            imageIndex={currentImageIndex}
+            imageCount={imageCount}
+            handleImageChange={handleImageChange}
           />
           <div className="mb-4">
             <LabelSelector

@@ -14,7 +14,8 @@ import type { Label } from "@/types/dataset";
  */
 export const useImageAnnotation = (taskId: string) => {
   const [vd, setVd] = useState<Vditor | undefined>();
-  const [currentImageId, setCurrentImageId] = useState("");
+  // const [currentImageId, setCurrentImageId] = useState("");
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [selectedAnnotation, setSelectedAnnotation] =
     useState<Annotation | null>(null);
@@ -22,6 +23,8 @@ export const useImageAnnotation = (taskId: string) => {
   const [currentLabelInfo, setCurrentLabelInfo] = useState<Label | null>(null);
   const [ocrOriginalText, setOcrOriginalText] = useState("获取中...");
   // const imageAnnotationLogger = logger.child({ name: "IMAGE_ANNOTATION", taskId, currentImageId });
+    // 获取 App 组件的 message 方法
+    const { message: appMessage } = App.useApp();
   // 获取任务详情
   const { data: taskDetails, isLoading: isLoadingTask } =
     api.task.getById.useQuery(taskId, {
@@ -39,15 +42,25 @@ export const useImageAnnotation = (taskId: string) => {
     data: imageAnnotations = [],
     isLoading: isLoadingAnnotations,
     refetch: refetchAnnotations,
-  } = api.image.getAnnotations.useQuery(currentImageId, {
-    enabled: !!currentImageId,
+  } = api.image.getAnnotations.useQuery(imageList[currentImageIndex]?.id ?? "", {
+    enabled: !!imageList[currentImageIndex],
   });
+  const { data: lastAnnotatedImage } = api.task.getLastAnnotatedImage.useQuery(taskId, {
+    enabled: !!taskId,
+  });
+  useEffect(() => {
+    if (lastAnnotatedImage&&imageList.length>0) {
+      const index = imageList.findIndex((image) => image.id === lastAnnotatedImage);
+      if (index !== -1) {
+        setCurrentImageIndex(index);
+        appMessage.success(`自动跳转至最后标注图像:序号${index+1}`);
+      }
+    }
+  }, [lastAnnotatedImage,imageList,appMessage]);
 
   // 获取 utils 对象用于使查询失效
   const utils = api.useUtils();
-  
-  // 获取 App 组件的 message 方法
-  const { message: appMessage } = App.useApp();
+
 
   // 当获取到图像标注时，更新标注状态
   useEffect(() => {
@@ -90,11 +103,11 @@ export const useImageAnnotation = (taskId: string) => {
   });
 
   // 初始化当前图像
-  useEffect(() => {
-    if (imageList?.[0]) {
-      setCurrentImageId(imageList[0].id);
-    }
-  }, [imageList]);
+  // useEffect(() => {
+  //   if (imageList?.[0]) {
+  //     setCurrentImageId(imageList[0].id);
+  //   }
+  // }, [imageList]);
 
   // 处理标注变化
   const handleAnnotationChange = (newAnnotations: Annotation[]) => {
@@ -169,14 +182,14 @@ export const useImageAnnotation = (taskId: string) => {
 
   // 保存标注
   const saveAnnotations = async () => {
-    if (!currentImageId) return;
+    if (!imageList[currentImageIndex]) return;
 
     setIsSaving(true);
 
     try {
       // 调用API保存标注
       await saveAnnotationsMutation.mutateAsync({
-        imageId: currentImageId,
+        imageId: imageList[currentImageIndex].id,
         annotations: annotations.map((annotation) => {
           // 转换标注格式以匹配API要求
           const points = [];
@@ -225,36 +238,28 @@ export const useImageAnnotation = (taskId: string) => {
   // 切换到下一张图像
   const nextImage = () => {
     if (imageList.length === 0) return;
-
-    const currentIndex = imageList.findIndex(
-      (img) => img.id === currentImageId,
-    );
-    const nextImage = imageList[currentIndex + 1];
-    if (nextImage) {
-      setCurrentImageId(nextImage.id);
-      setSelectedAnnotation(null);
-      setAnnotations([]); // 清空当前标注
-    }
+    handleImageChange(currentImageIndex + 1);
+    // const currentIndex = imageList.findIndex(
+    //   (img) => img.id === currentImageId,
+    // );
+    // const nextImage = imageList[currentIndex + 1];
+    // if (nextImage) {
+    //   setCurrentImageId(nextImage.id);
+    //   setSelectedAnnotation(null);
+    //   setAnnotations([]); // 清空当前标注
+    // }
   };
 
   // 切换到上一张图像
   const prevImage = () => {
     if (imageList.length === 0) return;
 
-    const currentIndex = imageList.findIndex(
-      (img) => img.id === currentImageId,
-    );
-    const prevImage = imageList[currentIndex - 1];
-    if (prevImage) {
-      setCurrentImageId(prevImage.id);
-      setSelectedAnnotation(null);
-      setAnnotations([]); // 清空当前标注
-    }
+    handleImageChange(currentImageIndex - 1);
   };
 
   const saveOcrAnnotations = async () => {
     if (
-      !currentImageId ||
+      !imageList[currentImageIndex] ||
       !vd ||
       vd.getValue() === "无标注" ||
       vd.getValue() === "" ||
@@ -267,7 +272,7 @@ export const useImageAnnotation = (taskId: string) => {
     try {
       // 调用API保存标注
       await saveAnnotationsMutation.mutateAsync({
-        imageId: currentImageId,
+        imageId: imageList[currentImageIndex]?.id,
         annotations: [
           {
             id: "human-ocr",
@@ -285,9 +290,21 @@ export const useImageAnnotation = (taskId: string) => {
     }
   };
 
+  const handleImageChange = (imageIndex: number) => {
+    if (imageIndex >= 0 && imageList[imageIndex]) {
+      setCurrentImageIndex(imageIndex);
+      setSelectedAnnotation(null);
+      setAnnotations([]); // 清空当前标注
+    } else {
+      appMessage.error("图像不存在");
+    }
+  };
+
   return {
     imageList,
-    currentImageId,
+    currentImageId: imageList[currentImageIndex]?.id,
+    currentImageIndex,
+    imageCount: imageList.length,
     // setCurrentImageId,
     annotations,
     selectedAnnotation,
@@ -297,8 +314,8 @@ export const useImageAnnotation = (taskId: string) => {
     isSaving,
     vd,
     ocrOriginalText,
-    hasPrevImage: currentImageId !== imageList[0]?.id,
-    hasNextImage: currentImageId !== imageList[imageList.length - 1]?.id,
+    hasPrevImage: currentImageIndex > 0,
+    hasNextImage: currentImageIndex < imageList.length - 1,
     handleAnnotationChange,
     handleSelectAnnotation,
     handleSelectLabel,
@@ -308,6 +325,7 @@ export const useImageAnnotation = (taskId: string) => {
     prevImage,
     setVd,
     saveOcrAnnotations,
+    handleImageChange,
     // getCurrentTool,
     // getCurrentColor,
   };

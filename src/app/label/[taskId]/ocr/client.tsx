@@ -16,6 +16,9 @@ export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
     ocrOriginalText,
     hasPrevImage,
     hasNextImage,
+    currentImageIndex,
+    imageCount,
+    handleImageChange,
   } = useImageAnnotation(taskId);
   return (
     <div className="flex">
@@ -30,10 +33,13 @@ export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
           isSaving={isSaving}
           hasPrevImage={hasPrevImage}
           hasNextImage={hasNextImage}
+          imageIndex={currentImageIndex}
+          imageCount={imageCount}
+          handleImageChange={handleImageChange}
         />
         <Vditor
           initialValue={ocrOriginalText}
-          imageId={currentImageId}
+          imageId={currentImageId??`${currentImageIndex}`}
           vd={vd}
           setVd={setVd}
         />

@@ -83,12 +83,12 @@ export const taskRouter = createTRPCRouter({
 
         // 获取已标注的图像数量（有标注的图像）
         const annotatedImageCount = task.taskOnImage.filter(
-          (toi) => toi.image.annotations.length > 0,
+          (toi) => toi.image.annotations.filter((a) => a.createdById==task.assignedToId).length > 0,
         ).length;
 
         // 获取标注总数
         const annotationCount = task.taskOnImage.reduce(
-          (total, toi) => total + toi.image.annotations.length,
+          (total, toi) => total + toi.image.annotations.filter((a) => a.createdById==task.assignedToId).length,
           0,
         );
 
@@ -472,5 +472,25 @@ export const taskRouter = createTRPCRouter({
       }
 
       return imagesWithAnnotationCount;
+    }),
+  getLastAnnotatedImage: protectedProcedure
+    .input(z.string())
+    .query(async ({ ctx, input }) => {
+      const annotation = await ctx.db.annotation.findFirst({
+        where: {
+          createdById: ctx.session.user.id,
+          image: {
+            taskOnImage: {
+              some: {
+                taskId: input,
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+      });
+      return annotation?.imageId;
     }),
 });
