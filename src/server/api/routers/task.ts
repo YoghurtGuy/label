@@ -4,25 +4,43 @@ import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 export const taskRouter = createTRPCRouter({
+  // 获取任务数量
+  getCount: protectedProcedure
+    .query(async ({ ctx }) => {
+      const assignedCount = await ctx.db.annotationTask.count({
+        where: {
+          assignedToId: ctx.session.user.id,
+        },
+      });
+      const createdCount = await ctx.db.annotationTask.count({
+        where: {
+          creatorId: ctx.session.user.id,
+        },
+      });
+      return {
+        assigned: assignedCount,
+        created: createdCount,
+      };
+    }),
+
   // 获取任务列表
   getAll: protectedProcedure
     .input(
       z.object({
-        limit: z.number().min(1).max(100).default(10),
-        cursor: z.string().nullish(),
+        page: z.number().min(1).default(1),
+        pageSize: z.number().min(1).default(10),
       }),
     )
     .query(async ({ ctx, input }) => {
-      const { limit, cursor } = input;
       const tasks = await ctx.db.annotationTask.findMany({
-        take: limit + 1,
+        take: input.pageSize,
         where: {
           OR: [
             { creatorId: ctx.session.user.id },
             { assignedToId: ctx.session.user.id },
           ],
         },
-        cursor: cursor ? { id: cursor } : undefined,
+        skip: (input.page - 1) * input.pageSize,
         orderBy: {
           createdAt: "desc",
         },
@@ -84,16 +102,7 @@ export const taskRouter = createTRPCRouter({
         };
       });
 
-      let nextCursor: typeof cursor | undefined = undefined;
-      if (itemsWithStats.length > limit) {
-        const nextItem = itemsWithStats.pop();
-        nextCursor = nextItem!.id;
-      }
-
-      return {
-        items: itemsWithStats,
-        nextCursor,
-      };
+      return itemsWithStats;
     }),
 
   // 获取单个任务

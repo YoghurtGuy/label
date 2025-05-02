@@ -24,6 +24,9 @@ export default function DatasetsPage() {
     datasetsData,
     isLoading,
     session,
+    datasetCount,
+    page,
+    pageSize,
     handleFormClose,
     handleAssignFormClose,
     handleEditDataset,
@@ -31,6 +34,7 @@ export default function DatasetsPage() {
     handleCreateDataset,
     handleDeleteDataset,
     handleMenuChange,
+    handlePageChange,
   } = useDatasets();
 
   return (
@@ -46,8 +50,11 @@ export default function DatasetsPage() {
         }
         loading={isLoading}
         pagination={{
-          pageSize: 10,
+          pageSize,
+          total: activeKey === "all" ? datasetCount?.all : datasetCount?.mine,
+          current: page,
         }}
+        onChange={(pagination) => handlePageChange(pagination.current, pagination.pageSize)}
         metas={{
           title: {
             dataIndex: "name",
@@ -154,7 +161,7 @@ export default function DatasetsPage() {
                   <span>
                     全部数据集
                     {renderBadge(
-                      datasetsData?.length ?? 0,
+                      datasetCount?.all ?? 0,
                       activeKey === "all",
                     )}
                   </span>
@@ -166,9 +173,7 @@ export default function DatasetsPage() {
                   <span>
                     我创建的数据集
                     {renderBadge(
-                      datasetsData?.filter(
-                        (item) => item.createdById === session.data?.user.id,
-                      ).length ?? 0,
+                      datasetCount?.mine ?? 0,
                       activeKey === "mine",
                     )}
                   </span>

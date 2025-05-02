@@ -16,14 +16,17 @@ export const useDatasets = () => {
   const [assignFormVisible, setAssignFormVisible] = useState(false);
   const [editingDatasetId, setEditingDatasetId] = useState<string | undefined>();
   const [assigningDatasetId, setAssigningDatasetId] = useState<string | undefined>();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const utils = api.useUtils();
   const { message } = App.useApp();
   const session = useSession();
 
   const { data: datasetsData, isLoading } = api.dataset.getAll.useQuery({
-    pageSize: 10,
-    page: 1,
+    pageSize: pageSize,
+    page: page,
   });
+  const { data: datasetCount } = api.dataset.getCount.useQuery();
 
   const deleteDataset = api.dataset.delete.useMutation({
     onSuccess: async () => {
@@ -67,6 +70,15 @@ export const useDatasets = () => {
     }
   };
 
+  const handlePageChange = (page?: number, pageSize?: number) => {
+    if (page) {
+      setPage(page);
+    }
+    if (pageSize) {
+      setPageSize(pageSize);
+    }
+  };
+
   return {
     activeKey,
     formVisible,
@@ -74,8 +86,11 @@ export const useDatasets = () => {
     editingDatasetId,
     assigningDatasetId,
     datasetsData,
+    datasetCount,
     isLoading,
     session,
+    page,
+    pageSize,
     handleFormClose,
     handleAssignFormClose,
     handleEditDataset,
@@ -83,5 +98,6 @@ export const useDatasets = () => {
     handleCreateDataset,
     handleDeleteDataset,
     handleMenuChange,
+    handlePageChange,
   };
 }; 

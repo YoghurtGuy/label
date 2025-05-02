@@ -49,6 +49,18 @@ const datasetRouter = createTRPCRouter({
       }
     }),
 
+  // 获取数据集数量
+  getCount: protectedProcedure
+    .query(async ({ ctx }) => {
+      const mineCount = await ctx.db.dataset.count({
+        where: { createdById: ctx.session.user.id },
+      });
+      const allCount = await ctx.db.dataset.count();
+      return {
+        mine: mineCount,
+        all: allCount,
+      };
+    }),
   // 获取数据集列表
   getAll: protectedProcedure
     .input(

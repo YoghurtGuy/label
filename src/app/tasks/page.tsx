@@ -15,13 +15,17 @@ export default function TasksPage() {
     tasksData,
     isLoading,
     session,
+    taskCount,
+    page,
+    pageSize,
     handleDeleteTask,
     handleMenuChange,
     handleStartTask,
+    handlePageChange,
   } = useTasks();
 
   // 根据activeKey过滤任务
-  const filteredTasks = tasksData?.items.filter((task) => {
+  const filteredTasks = tasksData?.filter((task) => {
     if (activeKey === "assigned") {
       return task.assignedToId === session.data?.user.id;
     } else {
@@ -36,8 +40,11 @@ export default function TasksPage() {
         dataSource={filteredTasks}
         loading={isLoading}
         pagination={{
-          pageSize: 10,
+          pageSize: pageSize,
+          current: page,
+          total: activeKey === "assigned" ? taskCount?.assigned : taskCount?.created,
         }}
+        onChange={(pagination) => handlePageChange(pagination.current, pagination.pageSize)}
         metas={{
           title: {
             dataIndex: "name",
@@ -125,14 +132,14 @@ export default function TasksPage() {
               {
                 key: 'assigned',
                 label: (
-                  <span>分配给我的任务{renderBadge(tasksData?.items.filter((item) => item.assignedToId === session.data?.user.id).length ?? 0, activeKey === 'assigned')}</span>
+                  <span>分配给我的任务{renderBadge(taskCount?.assigned ?? 0, activeKey === 'assigned')}</span>
                 ),
               },
               {
                 key: 'created',
                 label: (
                   <span>
-                    我创建的任务{renderBadge(tasksData?.items.filter((item) => item.creatorId === session.data?.user.id).length ?? 0, activeKey === 'created')}
+                    我创建的任务{renderBadge(taskCount?.created ?? 0, activeKey === 'created')}
                   </span>
                 ),
               },

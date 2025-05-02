@@ -17,8 +17,12 @@ export const useTasks = () => {
   const { message } = App.useApp();
   const session = useSession();
   const router = useRouter();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const { data: taskCount } = api.task.getCount.useQuery();
   const { data: tasksData, isLoading } = api.task.getAll.useQuery({
-    limit: 10,
+    pageSize: pageSize,
+    page: page,
   });
 
   const deleteTask = api.task.delete.useMutation({
@@ -44,13 +48,25 @@ export const useTasks = () => {
     router.push(`/label/${id}/${type}`);
   };
 
+  const handlePageChange = (page?: number, pageSize?: number) => {
+    if (page) {
+      setPage(page);
+    }
+    if (pageSize) {
+      setPageSize(pageSize);
+    }
+  };
   return {
     activeKey,
     tasksData,
     isLoading,
     session,
+    taskCount,
+    page,
+    pageSize,
     handleDeleteTask,
     handleMenuChange,
     handleStartTask,
+    handlePageChange,
   };
 }; 
