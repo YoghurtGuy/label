@@ -5,6 +5,7 @@ import React from "react";
 import { PlusOutlined } from "@ant-design/icons";
 import { ProList } from "@ant-design/pro-components";
 import { Button, Popconfirm, Tag } from "antd";
+import Link from "next/link";
 
 import { type Dataset } from "@/types/dataset";
 import { renderBadge } from "@/utils/badge";
@@ -93,13 +94,13 @@ export default function DatasetsPage() {
                     </div>
                   </div>
                 )}
-                <div>
+                <Link href={`/datasets/${record.id}`}>
                   <div className="text-center">图像</div>
                   <div className="text-center font-bold">
                     {record.stats?.annotatedImageCount}/
                     {record.stats?.imageCount}
                   </div>
-                </div>
+                </Link>
                 {record.type === "OBJECT_DETECTION" && (
                   <div>
                     <div className="text-center">标注</div>

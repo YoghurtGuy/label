@@ -8,7 +8,6 @@ import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { isImageFile, getMimeTypeFromPath } from "@/utils/image";
 
-
 export const imageRouter = createTRPCRouter({
   // 获取图像
   getImageById: protectedProcedure
@@ -28,63 +27,66 @@ export const imageRouter = createTRPCRouter({
           },
         },
       });
-      
+
       if (!image) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "图像不存在",
         });
       }
-      if (!image.taskOnImage.some(taskOnImage => taskOnImage.task.assignedToId === ctx.session.user.id)) {
+      if (
+        !image.taskOnImage.some(
+          (taskOnImage) =>
+            taskOnImage.task.assignedToId === ctx.session.user.id,
+        )
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "您没有权限访问此图像",
         });
       }
-      
-      
+
       // 检查是否配置了服务器图像目录
       if (!env.SERVER_IMAGES_DIR) {
         throw new Error("服务器图像目录未配置");
-    }
+      }
 
-  
-    const fullPath = path.join(env.SERVER_IMAGES_DIR, image.path);
-    try {
-      // 检查是否为文件
-      const stats = await fs.stat(fullPath);
-      if (!stats.isFile()) {
-        throw new Error("请求的路径不是文件");
+      const fullPath = path.join(env.SERVER_IMAGES_DIR, image.path);
+      try {
+        // 检查是否为文件
+        const stats = await fs.stat(fullPath);
+        if (!stats.isFile()) {
+          throw new Error("请求的路径不是文件");
+        }
+
+        // 检查文件扩展名
+        if (!isImageFile(fullPath)) {
+          throw new Error("不支持的文件类型");
+        }
+
+        // 读取文件并返回
+        const imageBuffer = await fs.readFile(fullPath);
+        const mimeType = getMimeTypeFromPath(fullPath);
+
+        // 将Buffer转换为Base64字符串
+        const imageData = imageBuffer.toString("base64");
+
+        return { imageData, mimeType };
+      } catch (err) {
+        // 安全地处理错误
+        let errorMessage = "未知错误";
+        if (
+          err &&
+          typeof err === "object" &&
+          "message" in err &&
+          typeof err.message === "string"
+        ) {
+          errorMessage = err.message;
+        }
+
+        throw new Error(`获取服务器图像失败: ${errorMessage}`);
       }
-  
-      // 检查文件扩展名
-      if (!isImageFile(fullPath)) {
-        throw new Error("不支持的文件类型");
-      }
-  
-      // 读取文件并返回
-      const imageBuffer = await fs.readFile(fullPath);
-      const mimeType = getMimeTypeFromPath(fullPath);
-      
-      // 将Buffer转换为Base64字符串
-      const imageData = imageBuffer.toString('base64');
-      
-      return { imageData, mimeType };
-    } catch (err) {
-      // 安全地处理错误
-      let errorMessage = "未知错误";
-      if (
-        err &&
-        typeof err === "object" &&
-        "message" in err &&
-        typeof err.message === "string"
-      ) {
-        errorMessage = err.message;
-      }
-  
-      throw new Error(`获取服务器图像失败: ${errorMessage}`);
-    }
-  }),
+    }),
   // 获取下一张待标注图像
   // getNextImage: protectedProcedure
   //   .input(z.string())
@@ -214,7 +216,7 @@ export const imageRouter = createTRPCRouter({
 
   //     return null;
   //   }),
-  
+
   // 保存图像标注
   saveAnnotations: protectedProcedure
     .input(
@@ -231,40 +233,47 @@ export const imageRouter = createTRPCRouter({
                 x: z.number(),
                 y: z.number(),
                 order: z.number(),
-              })
+              }),
             ),
-          })
+          }),
         ),
-      })
+      }),
     )
     .mutation(async ({ ctx, input }) => {
       const { imageId, annotations } = input;
-      
+
       // 检查图像是否存在
       const image = await ctx.db.image.findUnique({
         where: { id: imageId },
-        include: { taskOnImage: {
-          include: {
-            task: true,
+        include: {
+          taskOnImage: {
+            include: {
+              task: true,
+            },
           },
-        } },
+        },
       });
-      
+
       if (!image) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "图像不存在",
         });
       }
-      
+
       // 检查用户是否有权限标注此图像
-      if (!image.taskOnImage.some(taskOnImage => taskOnImage.task.assignedToId === ctx.session.user.id)) {
+      if (
+        !image.taskOnImage.some(
+          (taskOnImage) =>
+            taskOnImage.task.assignedToId === ctx.session.user.id,
+        )
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "您没有权限标注此图像",
         });
       }
-      
+
       // 开始事务
       return await ctx.db.$transaction(async (tx) => {
         // 删除现有标注
@@ -275,19 +284,19 @@ export const imageRouter = createTRPCRouter({
             },
           },
         });
-        
+
         await tx.annotation.deleteMany({
           where: {
             imageId,
           },
         });
-        
+
         // 创建新标注
         const createdAnnotations = [];
-        
+
         for (const annotation of annotations) {
           const { id, type, labelId, text, points } = annotation;
-          
+
           // 创建标注
           const createdAnnotation = await tx.annotation.create({
             data: {
@@ -307,27 +316,27 @@ export const imageRouter = createTRPCRouter({
               },
             },
           });
-          
+
           createdAnnotations.push(createdAnnotation);
         }
-        
+
         return {
           success: true,
           count: createdAnnotations.length,
         };
       });
     }),
-    
+
   // 获取图像标注
   getAnnotations: protectedProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
       const imageId = input;
-      
+
       // 检查图像是否存在
       const image = await ctx.db.image.findUnique({
         where: { id: imageId },
-        include: { 
+        include: {
           taskOnImage: {
             include: {
               task: true,
@@ -338,69 +347,77 @@ export const imageRouter = createTRPCRouter({
               label: true,
               points: {
                 orderBy: {
-                  order: 'asc'
-                }
-              }
+                  order: "asc",
+                },
+              },
             },
             orderBy: {
-              createdAt: 'asc'
-            }
-          }
+              createdAt: "asc",
+            },
+          },
         },
       });
-      
+
       if (!image) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "图像不存在",
         });
       }
-      
+
       // 检查用户是否有权限访问此图像
-      if (!image.taskOnImage.some(taskOnImage => taskOnImage.task.assignedToId === ctx.session.user.id)) {
+      if (
+        !image.taskOnImage.some(
+          (taskOnImage) =>
+            taskOnImage.task.assignedToId === ctx.session.user.id,
+        )
+      ) {
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "您没有权限访问此图像",
         });
       }
-      
+
       // 转换标注格式
-      const formattedAnnotations = image.annotations.map(annotation => {
+      const formattedAnnotations = image.annotations.map((annotation) => {
         // 获取标签信息
-        const labelName = annotation.label?.name ?? '未命名';
-        const labelColor = annotation.label?.color ?? '#000000';
-        
+        const labelName = annotation.label?.name ?? "未命名";
+        const labelColor = annotation.label?.color ?? "#000000";
+
         // 根据标注类型转换数据格式
         let data: Record<string, unknown> = {};
-        
-        if (annotation.type === 'RECTANGLE' && annotation.points.length >= 4) {
+
+        if (annotation.type === "RECTANGLE" && annotation.points.length >= 4) {
           // 矩形标注，需要计算左上角坐标和宽高
           const points = annotation.points;
           const left = Math.min(points[0]?.x ?? 0, points[3]?.x ?? 0);
           const top = Math.min(points[0]?.y ?? 0, points[1]?.y ?? 0);
           const width = Math.abs((points[1]?.x ?? 0) - (points[0]?.x ?? 0));
           const height = Math.abs((points[3]?.y ?? 0) - (points[0]?.y ?? 0));
-          
+
           data = {
             left,
             top,
             width,
-            height
+            height,
           };
-        } else if (annotation.type === 'POLYGON') {
+        } else if (annotation.type === "POLYGON") {
           // 多边形标注，直接使用点集合
           data = {
-            points: annotation.points.map(point => ({
+            points: annotation.points.map((point) => ({
               x: point.x,
-              y: point.y
-            }))
+              y: point.y,
+            })),
           };
         }
-        
+
         // 返回前端需要的标注格式
         return {
           id: annotation.id,
-          type: annotation.type === 'RECTANGLE' ? 'rectangle' as const : 'polygon' as const,
+          type:
+            annotation.type === "RECTANGLE"
+              ? ("rectangle" as const)
+              : ("polygon" as const),
           label: labelName,
           labelId: annotation.labelId ?? undefined,
           color: labelColor,
@@ -408,7 +425,36 @@ export const imageRouter = createTRPCRouter({
           ocrText: annotation.text ?? undefined,
         };
       });
-      
+
       return formattedAnnotations;
+    }),
+
+  getImages: protectedProcedure
+    .input(
+      z.object({
+        datasetId: z.string(),
+        limit: z.number().min(1).max(100),
+        cursor: z.string().optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const { limit, cursor, datasetId } = input;
+      const items = await ctx.db.image.findMany({
+        take: limit + 1,
+        where: { datasetId },
+        cursor: cursor ? { id: cursor } : undefined,
+        orderBy: { filename: "asc" },
+      });
+
+      let nextCursor: typeof cursor | undefined = undefined;
+      if (items.length > limit) {
+        const nextItem = items.pop();
+        nextCursor = nextItem!.id;
+      }
+
+      return {
+        items,
+        nextCursor,
+      };
     }),
 });
