@@ -42,6 +42,7 @@ export async function GET(
             task: true,
           },
         },
+        dataset:true
       },
     });
     
@@ -54,7 +55,7 @@ export async function GET(
     }
     
     // 检查权限：只有被分配任务的用户才能访问图片
-    if (!image.taskOnImage.some(toi => toi.task.assignedToId === session.user.id)) {
+    if (!image.taskOnImage.some(toi => toi.task.assignedToId === session.user.id) &&image.dataset.createdById!==session.user.id) {
       // imageLogger.error("您没有权限访问此图片", {
       //   imageId,
       //   userId: session.user.id,
@@ -69,7 +70,6 @@ export async function GET(
     }
 
     const fullPath = path.join(env.SERVER_IMAGES_DIR, image.path);
-    console.log("fullPath", fullPath, image.path, env.SERVER_IMAGES_DIR);
     
     try {
       // 检查是否为文件
