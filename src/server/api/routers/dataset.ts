@@ -8,6 +8,7 @@ import { z } from "zod";
 // import { type DatasetType, type ImportMethod } from "@/types/dataset";
 
 import { env } from "@/env";
+import { type statsWithDatasetId } from "@/types/dataset";
 import type { ImportProgress } from "@/types/import";
 import { getDirectoryTree } from "@/utils/fileSystem";
 import { getImagesFromDirectory } from "@/utils/image";
@@ -72,57 +73,23 @@ const datasetRouter = createTRPCRouter({
       const { pageSize, page } = input;
       const items = await ctx.db.dataset.findMany({
         take: pageSize,
-        where: {
-          createdById: ctx.session.user.id,
-        },
         skip: (page - 1) * pageSize,
         orderBy: {
           createdAt: "desc",
         },
         include: {
           labels: true,
-          images: {
-            include: {
-              annotations: true,
-            },
-          },
         },
       });
-
-      // 处理每个数据集，添加统计信息
-      const itemsWithStats = await Promise.all(
-        items.map(async (dataset) => {
-          // 获取图像总数
-          const imageCount = dataset.images.length;
-          const annotations = dataset.images.flatMap(
-            (image) => image.annotations,
-          );
-
-          // 获取已标注的图像数量（有标注的图像）
-          const annotatedImageCount = dataset.images.filter((image) =>
-            image.annotations.find((annotation) => !!annotation.createdById),
-          ).length;
-
-          // 获取已预标注的图像数量（有预标注的图像）
-          const preAnnotatedImageCount = annotations.filter(
-            (annotation) => !annotation.createdById,
-          ).length;
-
-          // 获取标注总数
-          const annotationCount = annotations.length;
-
-          return {
-            ...dataset,
-            stats: {
-              imageCount,
-              annotatedImageCount,
-              annotationCount,
-              preAnnotatedImageCount,
-            },
-          };
-        }),
-      );
-
+      const rawStats = await ctx.db.$queryRaw<statsWithDatasetId[]>`
+        SELECT d.ID AS "datasetId",COUNT(DISTINCT i.ID) AS "imageCount",COUNT(DISTINCT CASE WHEN A."createdById" IS NOT NULL THEN i.ID END) AS "annotatedImageCount",COUNT(CASE WHEN A."createdById" IS NOT NULL THEN 1 END) AS "annotationCount",COUNT(DISTINCT CASE WHEN EXISTS (
+        SELECT 1 FROM "Annotation" a3 WHERE a3."imageId"=i.ID AND a3."createdById" IS NULL) THEN i.ID END) AS "preAnnotatedImageCount" FROM "Dataset" d LEFT JOIN "Image" i ON i."datasetId"=d.ID LEFT JOIN "Annotation" A ON A."imageId"=i.ID GROUP BY d.ID ORDER BY d."createdAt" DESC
+        LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
+      `;
+      const itemsWithStats = items.map((item) => ({
+        ...item,
+        stats: rawStats.find((stats) => stats.datasetId === item.id),
+      }));
       return itemsWithStats;
     }),
 

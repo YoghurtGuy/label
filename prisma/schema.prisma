@@ -81,7 +81,8 @@ model Dataset {
     type        DatasetType @default(OBJECT_DETECTION)
     labels      Label[]
     
-    @@index([name])
+    @@index([createdAt])
+    @@index([id])
 }
 
 model Image {
@@ -100,6 +101,7 @@ model Image {
 
     @@index([filename])
     @@index([datasetId])
+    @@index([id])
 }
 
 model AnnotationTask {
@@ -140,6 +142,7 @@ model Annotation {
     points      Point[]  // 用于矩形和多边形标注的点位
 
     @@index([imageId])
+    @@index([createdById])
 }
 
 model Point {

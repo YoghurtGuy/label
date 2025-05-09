@@ -1,13 +1,22 @@
-export type DatasetStatus = 'processing' | 'success' | 'error';
+export type DatasetStatus = "processing" | "success" | "error";
 
-export type DatasetType = 'OBJECT_DETECTION' | 'OCR';
+export type DatasetType = "OBJECT_DETECTION" | "OCR";
 
-export type ImportMethod = 'BROWSER_UPLOAD' | 'SERVER_FOLDER';
+export type ImportMethod = "BROWSER_UPLOAD" | "SERVER_FOLDER";
 
 export interface DatasetContent {
   label: string;
   value: number | string;
   status?: DatasetStatus;
+}
+interface stats {
+  imageCount: number;
+  annotatedImageCount: number;
+  annotationCount: number;
+  preAnnotatedImageCount: number;
+}
+export interface statsWithDatasetId extends stats {
+  datasetId: string;
 }
 
 export interface Label {
@@ -15,7 +24,7 @@ export interface Label {
   name: string;
   color: string;
   description?: string | null;
-  type?: 'rectangle' | 'polygon' | 'select';
+  type?: "rectangle" | "polygon" | "select";
 }
 
 export interface Dataset {
@@ -29,24 +38,20 @@ export interface Dataset {
   type: DatasetType;
   labels: Label[];
   content?: DatasetContent[];
-  stats?: {
-    imageCount: number;
-    annotatedImageCount: number;
-    annotationCount: number;
-    preAnnotatedImageCount: number;
-  };
+  stats?: stats;
 }
 
 export interface CreateDatasetInput {
   name: string;
   description: string;
   type: DatasetType;
-  labels: Omit<Label, 'id'>[];
+  labels: Omit<Label, "id">[];
   importMethod: ImportMethod;
   serverPath?: string;
   prompts?: string;
 }
 
-export interface UpdateDatasetInput extends Partial<Omit<CreateDatasetInput, 'importMethod' | 'serverPath'>> {
+export interface UpdateDatasetInput
+  extends Partial<Omit<CreateDatasetInput, "importMethod" | "serverPath">> {
   id: string;
-} 
+}
