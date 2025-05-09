@@ -240,7 +240,7 @@ export const taskRouter = createTRPCRouter({
             });
           }
           // 获取指定范围的图像
-          const images = dataset.images.slice(startIndex, endIndex + 1);
+          const images = dataset.images.filter((image)=>image.order>=startIndex&&image.order<=endIndex);
           // 创建任务
           await tx.annotationTask.create({
             data: {
@@ -255,28 +255,7 @@ export const taskRouter = createTRPCRouter({
                 })),
               },
             },
-            // include: {
-            //   creator: {
-            //     select: {
-            //       id: true,
-            //       name: true,
-            //     },
-            //   },
-            //   assignedTo: {
-            //     select: {
-            //       id: true,
-            //       name: true,
-            //     },
-            //   },
-            //   dataset: {
-            //     select: {
-            //       id: true,
-            //       name: true,
-            //       type: true,
-            //     },
-            //   },
-            //   taskOnImage: true,
-            // },
+
           });
         }
       });

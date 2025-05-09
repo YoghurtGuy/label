@@ -165,12 +165,12 @@ const datasetRouter = createTRPCRouter({
       // 添加序号信息
       const unassignedImageIndex: number[] = [];
       const unannotatedImageIndex: number[] = [];
-      dataset.images.forEach((image, index) => {
+      dataset.images.forEach((image) => {
         if (!image.annotations.length) {
-          unannotatedImageIndex.push(index);
+          unannotatedImageIndex.push(image.order);
         }
         if (!image.taskOnImage.length) {
-          unassignedImageIndex.push(index);
+          unassignedImageIndex.push(image.order);
         }
       });
       return {
