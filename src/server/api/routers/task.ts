@@ -203,7 +203,7 @@ export const taskRouter = createTRPCRouter({
         include: {
           images: {
             orderBy: {
-              createdAt: "asc",
+              order: "asc",
             },
           },
         },

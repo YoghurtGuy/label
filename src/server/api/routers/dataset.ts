@@ -10,7 +10,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import type { ImportProgress } from "@/types/import";
 import { getDirectoryTree } from "@/utils/fileSystem";
-import { getImagesFromDirectory} from "@/utils/image";
+import { getImagesFromDirectory } from "@/utils/image";
 // import logger from "@/utils/logger";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -50,17 +50,16 @@ const datasetRouter = createTRPCRouter({
     }),
 
   // 获取数据集数量
-  getCount: protectedProcedure
-    .query(async ({ ctx }) => {
-      const mineCount = await ctx.db.dataset.count({
-        where: { createdById: ctx.session.user.id },
-      });
-      const allCount = await ctx.db.dataset.count();
-      return {
-        mine: mineCount,
-        all: allCount,
-      };
-    }),
+  getCount: protectedProcedure.query(async ({ ctx }) => {
+    const mineCount = await ctx.db.dataset.count({
+      where: { createdById: ctx.session.user.id },
+    });
+    const allCount = await ctx.db.dataset.count();
+    return {
+      mine: mineCount,
+      all: allCount,
+    };
+  }),
   // 获取数据集列表
   getAll: protectedProcedure
     .input(
@@ -95,11 +94,13 @@ const datasetRouter = createTRPCRouter({
         items.map(async (dataset) => {
           // 获取图像总数
           const imageCount = dataset.images.length;
-          const annotations = dataset.images.flatMap((image) => image.annotations);
+          const annotations = dataset.images.flatMap(
+            (image) => image.annotations,
+          );
 
           // 获取已标注的图像数量（有标注的图像）
-          const annotatedImageCount = dataset.images.filter(
-            (image) => image.annotations.find((annotation) => !!annotation.createdById),
+          const annotatedImageCount = dataset.images.filter((image) =>
+            image.annotations.find((annotation) => !!annotation.createdById),
           ).length;
 
           // 获取已预标注的图像数量（有预标注的图像）
@@ -148,7 +149,7 @@ const datasetRouter = createTRPCRouter({
               },
             },
             orderBy: {
-              createdAt: "asc",
+              order: "asc",
             },
           },
         },
@@ -202,7 +203,8 @@ const datasetRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { labels, importMethod, serverPath, prompts, ...datasetData } = input;
+      const { labels, importMethod, serverPath, prompts, ...datasetData } =
+        input;
 
       // 创建数据集
       const dataset = await ctx.db.dataset.create({
@@ -222,81 +224,93 @@ const datasetRouter = createTRPCRouter({
       });
 
       // 处理图像导入
-      if (importMethod === "SERVER_FOLDER" && env.SERVER_IMAGES_DIR && serverPath) {
+      if (
+        importMethod === "SERVER_FOLDER" &&
+        env.SERVER_IMAGES_DIR &&
+        serverPath
+      ) {
         try {
-          console.log("获取目录中的所有图像文件",env.SERVER_IMAGES_DIR, serverPath,path.join(env.SERVER_IMAGES_DIR, serverPath));
+          console.log(
+            "获取目录中的所有图像文件",
+            env.SERVER_IMAGES_DIR,
+            serverPath,
+            path.join(env.SERVER_IMAGES_DIR, serverPath),
+          );
           // 获取目录中的所有图像文件
-          const imageFiles = await getImagesFromDirectory(path.join(env.SERVER_IMAGES_DIR, serverPath));
+          const imageFiles = await getImagesFromDirectory(
+            path.join(env.SERVER_IMAGES_DIR, serverPath),
+          );
           // const totalFiles = imageFiles.length;
           // let processedCount = 0;
           // const failedFiles: string[] = [];
           await ctx.db.image.createMany({
-            data: imageFiles.map((image) => ({
+            data: imageFiles.map((image, index) => ({
               ...image,
+              order: index,
               datasetId: dataset.id,
             })),
           });
 
-        //   // 发送开始处理的进度信息
-        //   progressEmitter.emit("progress", {
-        //     datasetId: dataset.id,
-        //     total: totalFiles,
-        //     processed: processedCount,
-        //     currentFile: "",
-        //     status: "processing",
-        //   } as ImportProgress);
+          //   // 发送开始处理的进度信息
+          //   progressEmitter.emit("progress", {
+          //     datasetId: dataset.id,
+          //     total: totalFiles,
+          //     processed: processedCount,
+          //     currentFile: "",
+          //     status: "processing",
+          //   } as ImportProgress);
 
-        //   // 逐个处理图像文件
-        //   for (const imageFile of imageFiles) {
-        //     try {
-        //       const metadata = await getImageMetadata(imageFile.path);
+          //   // 逐个处理图像文件
+          //   for (const imageFile of imageFiles) {
+          //     try {
+          //       const metadata = await getImageMetadata(imageFile.path);
 
-        //       // 创建图像记录
-        //       await ctx.db.image.create({
-        //         data: {
-        //           filename: imageFile.filename,
-        //           path: path.relative(env.SERVER_IMAGES_DIR ?? '', imageFile.path),
-        //           width: metadata.width,
-        //           height: metadata.height,
-        //           datasetId: dataset.id,
-        //         },
-        //       });
+          //       // 创建图像记录
+          //       await ctx.db.image.create({
+          //         data: {
+          //           filename: imageFile.filename,
+          //           path: path.relative(env.SERVER_IMAGES_DIR ?? '', imageFile.path),
+          //           width: metadata.width,
+          //           height: metadata.height,
+          //           datasetId: dataset.id,
+          //         },
+          //       });
 
-        //       processedCount++;
-        //       // 发出进度更新事件
-        //       progressEmitter.emit("progress", {
-        //         datasetId: dataset.id,
-        //         total: totalFiles,
-        //         processed: processedCount,
-        //         currentFile: imageFile.filename,
-        //         status: "processing",
-        //       } as ImportProgress);
-        //     } catch (error) {
-        //       // datasetLogger.error(`处理图像失败: ${imageFile.path}`, error);
-        //       console.error(`处理图像失败: ${imageFile.path}`, error);
-        //       failedFiles.push(imageFile.filename);
-        //       continue;
-        //     }
-        //   }
+          //       processedCount++;
+          //       // 发出进度更新事件
+          //       progressEmitter.emit("progress", {
+          //         datasetId: dataset.id,
+          //         total: totalFiles,
+          //         processed: processedCount,
+          //         currentFile: imageFile.filename,
+          //         status: "processing",
+          //       } as ImportProgress);
+          //     } catch (error) {
+          //       // datasetLogger.error(`处理图像失败: ${imageFile.path}`, error);
+          //       console.error(`处理图像失败: ${imageFile.path}`, error);
+          //       failedFiles.push(imageFile.filename);
+          //       continue;
+          //     }
+          //   }
 
-        //   // 发送完成处理的进度信息
-        //   progressEmitter.emit("progress", {
-        //     datasetId: dataset.id,
-        //     total: totalFiles,
-        //     processed: processedCount,
-        //     currentFile: "",
-        //     status: "completed",
-        //   } as ImportProgress);
+          //   // 发送完成处理的进度信息
+          //   progressEmitter.emit("progress", {
+          //     datasetId: dataset.id,
+          //     total: totalFiles,
+          //     processed: processedCount,
+          //     currentFile: "",
+          //     status: "completed",
+          //   } as ImportProgress);
         } catch (error) {
-        //   // 发送错误信息
-        //   progressEmitter.emit("progress", {
-        //     datasetId: dataset.id,
-        //     total: 0,
-        //     processed: 0,
-        //     currentFile: "",
-        //     status: "error",
-        //     error: error instanceof Error ? error.message : "导入图像时出错",
-        //   } as ImportProgress);
+          //   // 发送错误信息
+          //   progressEmitter.emit("progress", {
+          //     datasetId: dataset.id,
+          //     total: 0,
+          //     processed: 0,
+          //     currentFile: "",
+          //     status: "error",
+          //     error: error instanceof Error ? error.message : "导入图像时出错",
+          //   } as ImportProgress);
 
           // 如果导入失败，删除已创建的数据集
           await ctx.db.dataset.delete({
@@ -432,44 +446,44 @@ const datasetRouter = createTRPCRouter({
         const dataset = await ctx.db.dataset.findFirst({
           where: {
             id: input,
-        },
-      });
-
-      if (!dataset) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "数据集不存在",
-        });
-      }
-      if (dataset.createdById !== ctx.session.user.id) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "无权限删除数据集",
-        });
-      }
-
-      await ctx.db.$transaction(async (tx) => {
-        await tx.label.deleteMany({
-          where: { datasetId: input },
-        });
-        await tx.annotation.deleteMany({
-          where: { image: { datasetId: input } },
-        });
-        await tx.taskOnImage.deleteMany({
-          where: { image: { datasetId: input } },
-        });
-        await tx.image.deleteMany({
-          where: { datasetId: input },
-        });
-        await tx.annotationTask.deleteMany({
-          where: {  datasetId: input },
-        });
-        await tx.dataset.delete({
-          where: { id: input },
+          },
         });
 
-        return { success: true };
-      });
+        if (!dataset) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "数据集不存在",
+          });
+        }
+        if (dataset.createdById !== ctx.session.user.id) {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "无权限删除数据集",
+          });
+        }
+
+        await ctx.db.$transaction(async (tx) => {
+          await tx.label.deleteMany({
+            where: { datasetId: input },
+          });
+          await tx.annotation.deleteMany({
+            where: { image: { datasetId: input } },
+          });
+          await tx.taskOnImage.deleteMany({
+            where: { image: { datasetId: input } },
+          });
+          await tx.image.deleteMany({
+            where: { datasetId: input },
+          });
+          await tx.annotationTask.deleteMany({
+            where: { datasetId: input },
+          });
+          await tx.dataset.delete({
+            where: { id: input },
+          });
+
+          return { success: true };
+        });
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",

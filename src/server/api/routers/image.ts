@@ -443,7 +443,7 @@ export const imageRouter = createTRPCRouter({
         take: limit + 1,
         where: { datasetId },
         cursor: cursor ? { id: cursor } : undefined,
-        orderBy: { filename: "asc" },
+        orderBy: { order: "asc" },
       });
 
       let nextCursor: typeof cursor | undefined = undefined;

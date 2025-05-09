@@ -86,6 +86,7 @@ model Dataset {
 
 model Image {
     id          String   @id @default(cuid())
+    order       Int        // 数据集内图片顺序
     filename    String
     path        String
     width       Int
