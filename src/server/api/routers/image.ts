@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { moveFile } from "@/utils/fileSystem";
 import { isImageFile, getMimeTypeFromPath } from "@/utils/image";
 
 export const imageRouter = createTRPCRouter({
@@ -28,7 +29,7 @@ export const imageRouter = createTRPCRouter({
         },
       });
 
-      if (!image) {
+      if (!image || image.deleteById!==null) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "图像不存在",
@@ -254,7 +255,7 @@ export const imageRouter = createTRPCRouter({
         },
       });
 
-      if (!image) {
+      if (!image || image.deleteById!==null) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "图像不存在",
@@ -358,7 +359,7 @@ export const imageRouter = createTRPCRouter({
         },
       });
 
-      if (!image) {
+      if (!image || image.deleteById!==null) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "图像不存在",
@@ -441,7 +442,10 @@ export const imageRouter = createTRPCRouter({
       const { limit, cursor, datasetId } = input;
       const items = await ctx.db.image.findMany({
         take: limit + 1,
-        where: { datasetId },
+        where: {
+          datasetId,
+          deleteById: null,
+        },
         cursor: cursor ? { id: cursor } : undefined,
         orderBy: { order: "asc" },
       });
@@ -456,5 +460,30 @@ export const imageRouter = createTRPCRouter({
         items,
         nextCursor,
       };
+    }),
+  delete: protectedProcedure
+    .input(z.string())
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const image = await ctx.db.image.update({
+          where: {
+            id: input,
+          },
+          data: {
+            deleteById: ctx.session.user.id,
+          },
+        });
+        await ctx.db.taskOnImage.deleteMany({
+          where:{
+            imageId:input
+          }
+        })
+        const sourcePath = path.join(env.SERVER_IMAGES_DIR, image.path);
+        moveFile(sourcePath, env.SERVER_IMAGES_TRASH_DIR);
+        return true;
+      } catch (err) {
+        console.error("移动失败:", err);
+        return false;
+      }
     }),
 });

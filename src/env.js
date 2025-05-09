@@ -16,7 +16,8 @@ export const env = createEnv({
       .enum(["development", "test", "production"])
       .default("development"),
     INVITE_CODE: z.string().optional(),
-    SERVER_IMAGES_DIR: z.string(),
+    SERVER_IMAGES_DIR: z.string().default('/img'),
+    SERVER_IMAGES_TRASH_DIR:z.string().default('/img/trash')
   },
 
   /**
@@ -38,6 +39,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     INVITE_CODE: process.env.INVITE_CODE,
     SERVER_IMAGES_DIR: process.env.SERVER_IMAGES_DIR,
+    SERVER_IMAGES_TRASH_DIR: process.env.SERVER_IMAGES_TRASH_DIR,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -240,7 +240,7 @@ export const taskRouter = createTRPCRouter({
             });
           }
           // 获取指定范围的图像
-          const images = dataset.images.filter((image)=>image.order>=startIndex&&image.order<=endIndex);
+          const images = dataset.images.filter((image)=>image.order>=startIndex&&image.order<=endIndex&&image.deleteById===null);
           // 创建任务
           await tx.annotationTask.create({
             data: {
@@ -430,6 +430,7 @@ export const taskRouter = createTRPCRouter({
               taskId: input,
             },
           },
+          deleteById: null
         },
         include: {
           annotations: true,

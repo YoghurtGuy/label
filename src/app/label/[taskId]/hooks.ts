@@ -23,8 +23,8 @@ export const useImageAnnotation = (taskId: string) => {
   const [currentLabelInfo, setCurrentLabelInfo] = useState<Label | null>(null);
   const [ocrOriginalText, setOcrOriginalText] = useState("获取中...");
   // const imageAnnotationLogger = logger.child({ name: "IMAGE_ANNOTATION", taskId, currentImageId });
-    // 获取 App 组件的 message 方法
-    const { message: appMessage } = App.useApp();
+  // 获取 App 组件的 message 方法
+  const { message: appMessage } = App.useApp();
   // 获取任务详情
   const { data: taskDetails, isLoading: isLoadingTask } =
     api.task.getById.useQuery(taskId, {
@@ -32,35 +32,64 @@ export const useImageAnnotation = (taskId: string) => {
     });
 
   // 获取图像列表
-  const { data: imageList = [], isLoading: isLoadingImages } =
-    api.task.getImageListById.useQuery(taskId, {
-      enabled: !!taskId,
-    });
+  const {
+    data: imageList = [],
+    isLoading: isLoadingImages,
+    refetch: refetchImageList,
+  } = api.task.getImageListById.useQuery(taskId, {
+    enabled: !!taskId,
+  });
 
   // 获取当前图像的标注
   const {
     data: imageAnnotations = [],
     isLoading: isLoadingAnnotations,
     refetch: refetchAnnotations,
-  } = api.image.getAnnotations.useQuery(imageList[currentImageIndex]?.id ?? "", {
-    enabled: !!imageList[currentImageIndex],
+  } = api.image.getAnnotations.useQuery(
+    imageList[currentImageIndex]?.id ?? "",
+    {
+      enabled: !!imageList[currentImageIndex],
+    },
+  );
+
+  // 获取最近标注图像
+  const { data: lastAnnotatedImage } = api.task.getLastAnnotatedImage.useQuery(
+    taskId,
+    {
+      enabled: !!taskId,
+    },
+  );
+
+  // 删除照片
+  const deleteImageById = api.image.delete.useMutation({
+    onSuccess: async () => {
+      appMessage.success("删除图像成功");
+      await utils.task.getById.invalidate();
+      await utils.dataset.getById.invalidate();
+      await utils.dataset.getAll.invalidate();
+      await utils.task.getImageListById.invalidate();
+      await refetchImageList();
+    },
+    onError: (error) => {
+      console.error("删除图像失败:", error);
+      appMessage.error("删除图像失败");
+    },
   });
-  const { data: lastAnnotatedImage } = api.task.getLastAnnotatedImage.useQuery(taskId, {
-    enabled: !!taskId,
-  });
+
   useEffect(() => {
-    if (lastAnnotatedImage&&imageList.length>0&&currentImageIndex===0) {
-      const index = imageList.findIndex((image) => image.id === lastAnnotatedImage);
+    if (lastAnnotatedImage && imageList.length > 0 && currentImageIndex === 0) {
+      const index = imageList.findIndex(
+        (image) => image.id === lastAnnotatedImage,
+      );
       if (index !== -1) {
         setCurrentImageIndex(index);
-        appMessage.success(`自动跳转至最后标注图像:序号${index+1}`);
+        appMessage.success(`自动跳转至最后标注图像:序号${index + 1}`);
       }
     }
-  }, [lastAnnotatedImage,imageList]);
+  }, [lastAnnotatedImage, imageList]);
 
   // 获取 utils 对象用于使查询失效
   const utils = api.useUtils();
-
 
   // 当获取到图像标注时，更新标注状态
   useEffect(() => {
@@ -92,6 +121,8 @@ export const useImageAnnotation = (taskId: string) => {
   const saveAnnotationsMutation = api.image.saveAnnotations.useMutation({
     onSuccess: () => {
       appMessage.success("标注已保存");
+      void utils.image.getAnnotations.invalidate();
+      void refetchAnnotations();
       setIsSaving(false);
     },
     onError: (error) => {
@@ -216,8 +247,6 @@ export const useImageAnnotation = (taskId: string) => {
               points.push({ x: point.x, y: point.y, order: index });
             });
           }
-          void utils.image.getAnnotations.invalidate();
-          void refetchAnnotations();
 
           return {
             id: annotation.id,
@@ -300,6 +329,12 @@ export const useImageAnnotation = (taskId: string) => {
     }
   };
 
+  const handleDeleteImage = (imageId?: string) => {
+    if (imageId) {
+      deleteImageById.mutate(imageId);
+    }
+  };
+
   return {
     imageList,
     currentImageId: imageList[currentImageIndex]?.id,
@@ -326,6 +361,7 @@ export const useImageAnnotation = (taskId: string) => {
     setVd,
     saveOcrAnnotations,
     handleImageChange,
+    handleDeleteImage,
     // getCurrentTool,
     // getCurrentColor,
   };

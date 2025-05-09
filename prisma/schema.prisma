@@ -54,6 +54,7 @@ model User {
     sessions      Session[]
     createdTasks  AnnotationTask[] @relation("CreatedTasks")
     assignedTasks AnnotationTask[] @relation("AssignedTasks")
+    deletedImages Image[]
     annotations   Annotation[]
     datasets      Dataset[]
     adminPermission Boolean @default(false)
@@ -98,6 +99,8 @@ model Image {
     datasetId   String
     annotations Annotation[]
     taskOnImage TaskOnImage[]
+    deleteById String?
+    deleteBy   User?  @relation(fields: [deleteById], references: [id])
 
     @@index([filename])
     @@index([datasetId])

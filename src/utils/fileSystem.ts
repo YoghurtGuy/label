@@ -71,3 +71,22 @@ export const getDirectoryTree = (dirPath: string, maxDepth = 3): TreeNode[] => {
     return [];
   }
 }; 
+export function moveFile(oldPath:string, newDir:string) {
+  const fileName = path.basename(oldPath)
+  const newPath = path.join(newDir, fileName);
+
+  try {
+    // 确保目标目录存在，不存在则创建
+    fs.mkdir(newDir, { recursive: true },(err) => {
+      if (err) throw err;
+    });
+
+    // 移动文件
+    fs.rename(oldPath, newPath,(err) => {
+      if (err) throw err;
+    });
+    console.log('文件移动成功');
+  } catch (err) {
+    console.error('移动失败:', err);
+  }
+}

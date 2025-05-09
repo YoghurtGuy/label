@@ -83,7 +83,7 @@ const datasetRouter = createTRPCRouter({
       });
       const rawStats = await ctx.db.$queryRaw<statsWithDatasetId[]>`
         SELECT d.ID AS "datasetId",COUNT(DISTINCT i.ID) AS "imageCount",COUNT(DISTINCT CASE WHEN A."createdById" IS NOT NULL THEN i.ID END) AS "annotatedImageCount",COUNT(CASE WHEN A."createdById" IS NOT NULL THEN 1 END) AS "annotationCount",COUNT(DISTINCT CASE WHEN EXISTS (
-        SELECT 1 FROM "Annotation" a3 WHERE a3."imageId"=i.ID AND a3."createdById" IS NULL) THEN i.ID END) AS "preAnnotatedImageCount" FROM "Dataset" d LEFT JOIN "Image" i ON i."datasetId"=d.ID LEFT JOIN "Annotation" A ON A."imageId"=i.ID GROUP BY d.ID ORDER BY d."createdAt" DESC
+        SELECT 1 FROM "Annotation" a3 WHERE a3."imageId"=i.ID AND a3."createdById" IS NULL) THEN i.ID END) AS "preAnnotatedImageCount" FROM "Dataset" d LEFT JOIN "Image" i ON i."datasetId"=d.ID AND i."deleteById" IS NULL LEFT JOIN "Annotation" A ON A."imageId"=i.ID GROUP BY d.ID ORDER BY d."createdAt" DESC
         LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
       `;
       const itemsWithStats = items.map((item) => ({
@@ -117,6 +117,9 @@ const datasetRouter = createTRPCRouter({
             },
             orderBy: {
               order: "asc",
+            },
+            where: {
+              deleteById: null,
             },
           },
         },

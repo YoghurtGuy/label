@@ -37,6 +37,7 @@ export default function ObjectDetectionPage({
     currentImageIndex,
     imageCount,
     handleImageChange,
+    handleDeleteImage
   } = useImageAnnotation(taskId);
 
   if (!taskId||(taskDetails&&taskDetails.dataset?.type !== "OBJECT_DETECTION")) {
@@ -109,6 +110,7 @@ export default function ObjectDetectionPage({
             imageIndex={currentImageIndex}
             imageCount={imageCount}
             handleImageChange={handleImageChange}
+            deleteImage={()=>handleDeleteImage(currentImageId)}
           />
           <div className="mb-4">
             <LabelSelector
