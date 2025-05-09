@@ -49,14 +49,14 @@ export const useImageAnnotation = (taskId: string) => {
     enabled: !!taskId,
   });
   useEffect(() => {
-    if (lastAnnotatedImage&&imageList.length>0) {
+    if (lastAnnotatedImage&&imageList.length>0&&currentImageIndex===0) {
       const index = imageList.findIndex((image) => image.id === lastAnnotatedImage);
       if (index !== -1) {
         setCurrentImageIndex(index);
         appMessage.success(`自动跳转至最后标注图像:序号${index+1}`);
       }
     }
-  }, [lastAnnotatedImage,imageList,appMessage]);
+  }, [lastAnnotatedImage,imageList]);
 
   // 获取 utils 对象用于使查询失效
   const utils = api.useUtils();

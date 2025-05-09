@@ -470,6 +470,6 @@ export const taskRouter = createTRPCRouter({
           createdAt: "desc",
         },
       });
-      return annotation?.imageId;
+      return annotation?.imageId??null;
     }),
 });
