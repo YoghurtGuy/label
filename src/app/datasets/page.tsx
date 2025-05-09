@@ -128,7 +128,7 @@ export default function DatasetsPage() {
             ),
           },
           actions: {
-            render: (_, record) => [
+            render: (_, record) => record.createdById===session.data?.user.id?[
               <Button key="edit" onClick={() => handleEditDataset(record.id)}>
                 编辑
               </Button>,
@@ -149,7 +149,7 @@ export default function DatasetsPage() {
               >
                 <Button danger>删除</Button>
               </Popconfirm>,
-            ],
+            ]:[],
           },
         }}
         toolbar={{
