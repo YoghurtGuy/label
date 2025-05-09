@@ -72,7 +72,7 @@ const Navbar = () => {
           </Dropdown>
         ) : (
           <Button type="primary">
-            <Link href="/api/auth/signin">登录</Link>
+            <Link href="/login">登录</Link>
           </Button>
         )}
       </div>
