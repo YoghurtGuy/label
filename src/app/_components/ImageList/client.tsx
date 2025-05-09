@@ -33,7 +33,7 @@ const ImageList: React.FC<ImageListProps> = ({ datasetId }) => {
                 />
               }
             >
-              <Card.Meta title={image.filename} />
+              <Card.Meta title={`${image.order}`} description={image.filename} />
             </Card>
           </Col>
         ))}
