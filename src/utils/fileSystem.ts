@@ -16,6 +16,9 @@ import type{ TreeNode} from "@/types/dataset"
  * @returns 树形结构数组
  */
 export const getDirectoryTree = (dirPath: string, maxDepth = 3): TreeNode[] => {
+  if (env.IS_ON_VERCEL) {
+    throw new Error(`项目部署在 Vercel, 禁止访问服务器文件系统`);
+  }
   try {
     // 检查路径是否存在
     if (!fs.existsSync(dirPath)) {

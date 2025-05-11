@@ -10,7 +10,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import { type statsWithDatasetId } from "@/types/dataset";
 import type { ImportProgress } from "@/types/import";
-import { getFolderTree,getAistImages} from "@/utils/alist";
+import { getFolderTree, getAistImages } from "@/utils/alist";
 import { getDirectoryTree } from "@/utils/fileSystem";
 import { getImagesFromDirectory } from "@/utils/image";
 // import logger from "@/utils/logger";
@@ -32,10 +32,12 @@ const datasetRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       try {
-        const serverTree = getDirectoryTree(
-          path.join(env.SERVER_IMAGES_DIR, input.path),
-          input.maxDepth,
-        );
+        const serverTree = env.IS_ON_VERCEL
+          ? []
+          : getDirectoryTree(
+              path.join(env.SERVER_IMAGES_DIR, input.path),
+              input.maxDepth,
+            );
         const alistTree = env.ALIST_IMAGES_DIR
           ? await getFolderTree(input.path)
           : [];
@@ -193,22 +195,14 @@ const datasetRouter = createTRPCRouter({
       });
 
       // 处理图像导入
-      if (
-        importMethod === "SERVER_FOLDER" &&
-        serverPath
-      ) {
+      if (importMethod === "SERVER_FOLDER" && serverPath) {
         try {
-          console.log(
-            "获取目录中的所有图像文件",
-            env.SERVER_IMAGES_DIR,
-            serverPath,
-            path.join(env.SERVER_IMAGES_DIR, serverPath),
-          );
           // 获取目录中的所有图像文件
-          const imageFiles = serverPath.startsWith("web:")?(
-            await getAistImages(serverPath.slice(4))
-          )
-          : (await getImagesFromDirectory(serverPath));
+          const imageFiles = serverPath.startsWith("web:")
+            ? await getAistImages(serverPath.slice(4))
+            : env.IS_ON_VERCEL
+              ? []
+              : await getImagesFromDirectory(serverPath);
 
           // const totalFiles = imageFiles.length;
           // let processedCount = 0;
@@ -218,7 +212,7 @@ const datasetRouter = createTRPCRouter({
               ...image,
               order: index,
               datasetId: dataset.id,
-              storage:serverPath.startsWith("web:")?"WEB":"SERVER"
+              storage: serverPath.startsWith("web:") ? "WEB" : "SERVER",
             })),
           });
 

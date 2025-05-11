@@ -78,6 +78,9 @@ export function isImageFile(filename: string): boolean {
  * @returns Promise<Array<{filename: string, path: string}>>
  */
 export async function getImagesFromDirectory(dirPath: string): Promise<Array<{filename: string, path: string}>> {
+  if (env.IS_ON_VERCEL) {
+    throw new Error(`项目部署在 Vercel, 禁止访问服务器文件系统`);
+  }
   const images: Array<{filename: string, path: string}> = [];
   const fullDirPath=path.join(env.SERVER_IMAGES_DIR, dirPath)
   try {

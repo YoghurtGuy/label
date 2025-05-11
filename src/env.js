@@ -15,12 +15,14 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
+    IS_ON_VERCEL:z.boolean(),
     INVITE_CODE: z.string().optional(),
     SERVER_IMAGES_DIR: z.string().default('/'),
     SERVER_IMAGES_TRASH_DIR:z.string().default('/trash'),
     ALIST_TOKEN:z.string().optional(),
     ALIST_URL:z.string().url().optional(),
     ALIST_IMAGES_DIR: z.string().default('/'),
+    ALIST_IMAGES_TRASH_DIR: z.string().default('/trash'),
   },
 
   /**
@@ -40,12 +42,14 @@ export const env = createEnv({
     AUTH_SECRET: process.env.AUTH_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
+    IS_ON_VERCEL: process.env.VERCEL === '1',
     INVITE_CODE: process.env.INVITE_CODE,
     SERVER_IMAGES_DIR: process.env.SERVER_IMAGES_DIR,
     SERVER_IMAGES_TRASH_DIR: process.env.SERVER_IMAGES_TRASH_DIR,
     ALIST_URL:process.env.ALIST_URL,
     ALIST_TOKEN:process.env.ALIST_TOKEN,
     ALIST_IMAGES_DIR:process.env.ALIST_IMAGES_DIR,
+    ALIST_IMAGES_TRASH_DIR:process.env.ALIST_IMAGES_TRASH_DIR
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

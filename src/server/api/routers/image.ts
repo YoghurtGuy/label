@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { moveAlistFile } from "@/utils/alist";
 import { moveFile } from "@/utils/fileSystem";
 
 export const imageRouter = createTRPCRouter({
@@ -175,7 +176,7 @@ export const imageRouter = createTRPCRouter({
         },
       });
 
-      if (!image || image.deleteById!==null) {
+      if (!image || image.deleteById !== null) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "图像不存在",
@@ -279,7 +280,7 @@ export const imageRouter = createTRPCRouter({
         },
       });
 
-      if (!image || image.deleteById!==null) {
+      if (!image || image.deleteById !== null) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "图像不存在",
@@ -394,13 +395,25 @@ export const imageRouter = createTRPCRouter({
           },
         });
         await ctx.db.taskOnImage.deleteMany({
-          where:{
-            imageId:input
+          where: {
+            imageId: input,
+          },
+        });
+
+        if (image.storage === "SERVER") {
+          if (!env.IS_ON_VERCEL) {
+            const sourcePath = path.join(env.SERVER_IMAGES_DIR, image.path);
+            moveFile(sourcePath, env.SERVER_IMAGES_TRASH_DIR);
           }
-        })
-        const sourcePath = path.join(env.SERVER_IMAGES_DIR, image.path);
-        moveFile(sourcePath, env.SERVER_IMAGES_TRASH_DIR);
-        return true;
+          return true;
+        } else {
+          const sourcePath = path.join(env.ALIST_IMAGES_DIR, image.path);
+          return moveAlistFile(
+            sourcePath,
+            env.ALIST_IMAGES_TRASH_DIR,
+            image.filename,
+          );
+        }
       } catch (err) {
         console.error("移动失败:", err);
         return false;

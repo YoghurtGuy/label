@@ -70,6 +70,9 @@ export async function GET(
     }
 
     if (image.storage === "SERVER") {
+      if (env.IS_ON_VERCEL) {
+        return new NextResponse("此项目部署在Vercel, 禁止访问服务器图像", { status: 400 });
+      }
       const fullPath = path.join(env.SERVER_IMAGES_DIR, image.path);
 
       try {

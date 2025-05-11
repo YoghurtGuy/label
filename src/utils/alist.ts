@@ -38,7 +38,7 @@ export async function getImageUrl(relativePath: string) {
     return undefined;
   }
   const raw = JSON.stringify({
-    path: path.join(env.ALIST_IMAGES_DIR,relativePath),
+    path: path.join(env.ALIST_IMAGES_DIR, relativePath),
     password: "",
     page: 1,
     per_page: 0,
@@ -131,7 +131,7 @@ export async function getFolderTree(dir_path = "/"): Promise<TreeNode[]> {
     folders
       .filter((f) => f.is_dir)
       .map(async (folder) => {
-        const relativePath = path.join(dir_path,folder.name);
+        const relativePath = path.join(dir_path, folder.name);
         const children = await getFolderTree(relativePath);
         return {
           label: folder.name,
@@ -144,4 +144,37 @@ export async function getFolderTree(dir_path = "/"): Promise<TreeNode[]> {
   );
 
   return tree;
+}
+
+export async function moveAlistFile(
+  src_dir: string,
+  dst_dir: string,
+  name: string,
+): Promise<boolean> {
+  const myHeaders = getHeader();
+  if (myHeaders === null) {
+    return false;
+  }
+  const raw = JSON.stringify({
+    src_dir,
+    dst_dir,
+    names: [name],
+  });
+
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: raw,
+  };
+  // TODO: 目标文件夹判断
+  try {
+    const response = await fetchJson<Response>(
+      `${env.ALIST_URL}/api/fs/move`,
+      requestOptions,
+    );
+    return response.code===200;
+  } catch (error) {
+    console.error(`移动文件${name}出错: `, error);
+    return false;
+  }
 }
