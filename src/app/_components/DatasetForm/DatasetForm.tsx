@@ -4,6 +4,7 @@ import {
   PlusOutlined,
   UploadOutlined,
   FolderOutlined,
+  CompassOutlined,
 } from "@ant-design/icons";
 import {
   ProForm,
@@ -21,7 +22,11 @@ import type { FormInstance } from "antd/es/form";
 
 import { type CreateDatasetInput } from "@/types/dataset";
 
-import { useDatasetForm, type DatasetFormProps, DISTINCT_COLORS } from "./hooks";
+import {
+  useDatasetForm,
+  type DatasetFormProps,
+  DISTINCT_COLORS,
+} from "./hooks";
 
 /**
  * 数据集表单组件
@@ -136,7 +141,8 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
                       defaultValue="#1890ff"
                       onChange={(color) => {
                         // 使用 FormListFieldData 的 form 属性
-                        const form = (f as unknown as { form: FormInstance }).form;
+                        const form = (f as unknown as { form: FormInstance })
+                          .form;
                         if (form) {
                           handleColorChange(color, index, form);
                         }
@@ -153,16 +159,14 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
             }}
           </ProFormList>
         )}
-        {
-          datasetType === "OCR" && (
-            <ProFormTextArea
-              name="prompts"
-              label="提示词"
-              placeholder="请输入提示词"
-              rules={[{ required: true, message: "请输入提示词" }]}
-            />
-          )
-        }
+        {datasetType === "OCR" && (
+          <ProFormTextArea
+            name="prompts"
+            label="提示词"
+            placeholder="请输入提示词"
+            rules={[{ required: true, message: "请输入提示词" }]}
+          />
+        )}
         {!initialValues && (
           <>
             <ProFormRadio.Group
@@ -196,7 +200,7 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
                 </Upload>
               </ProForm.Item>
             )}
-            
+
             {/* TODO: 服务器文件夹展示 */}
             {importMethod === "SERVER_FOLDER" && (
               <ProFormTreeSelect
@@ -207,6 +211,12 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
                   prefix: <FolderOutlined />,
                   loading: isLoadingDirectoryTree,
                   treeData: directoryTreeData,
+                  treeTitleRender: (nodeData) => (
+                    <div className="flex items-center gap-2" >
+                      <div>{`${nodeData.label}`}</div>
+                      {nodeData.value?.toString().startsWith("web:")&&<CompassOutlined />}
+                    </div>
+                  ),
                 }}
                 rules={[{ required: true, message: "请选择服务器文件夹路径" }]}
               />
@@ -242,4 +252,4 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
   );
 };
 
-export default DatasetForm; 
+export default DatasetForm;

@@ -1,4 +1,3 @@
-import { promises as fs } from "fs";
 import path from "path";
 
 import { TRPCError } from "@trpc/server";
@@ -7,87 +6,8 @@ import { z } from "zod";
 import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { moveFile } from "@/utils/fileSystem";
-import { isImageFile, getMimeTypeFromPath } from "@/utils/image";
 
 export const imageRouter = createTRPCRouter({
-  // 获取图像
-  getImageById: protectedProcedure
-    .input(z.string())
-    .query(async ({ ctx, input }) => {
-      const imageId = input;
-      const image = await ctx.db.image.findUnique({
-        where: {
-          id: imageId,
-        },
-        include: {
-          annotations: true,
-          taskOnImage: {
-            include: {
-              task: true,
-            },
-          },
-        },
-      });
-
-      if (!image || image.deleteById!==null) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "图像不存在",
-        });
-      }
-      if (
-        !image.taskOnImage.some(
-          (taskOnImage) =>
-            taskOnImage.task.assignedToId === ctx.session.user.id,
-        )
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "您没有权限访问此图像",
-        });
-      }
-
-      // 检查是否配置了服务器图像目录
-      if (!env.SERVER_IMAGES_DIR) {
-        throw new Error("服务器图像目录未配置");
-      }
-
-      const fullPath = path.join(env.SERVER_IMAGES_DIR, image.path);
-      try {
-        // 检查是否为文件
-        const stats = await fs.stat(fullPath);
-        if (!stats.isFile()) {
-          throw new Error("请求的路径不是文件");
-        }
-
-        // 检查文件扩展名
-        if (!isImageFile(fullPath)) {
-          throw new Error("不支持的文件类型");
-        }
-
-        // 读取文件并返回
-        const imageBuffer = await fs.readFile(fullPath);
-        const mimeType = getMimeTypeFromPath(fullPath);
-
-        // 将Buffer转换为Base64字符串
-        const imageData = imageBuffer.toString("base64");
-
-        return { imageData, mimeType };
-      } catch (err) {
-        // 安全地处理错误
-        let errorMessage = "未知错误";
-        if (
-          err &&
-          typeof err === "object" &&
-          "message" in err &&
-          typeof err.message === "string"
-        ) {
-          errorMessage = err.message;
-        }
-
-        throw new Error(`获取服务器图像失败: ${errorMessage}`);
-      }
-    }),
   // 获取下一张待标注图像
   // getNextImage: protectedProcedure
   //   .input(z.string())

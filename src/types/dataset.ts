@@ -55,3 +55,12 @@ export interface UpdateDatasetInput
   extends Partial<Omit<CreateDatasetInput, "importMethod" | "serverPath">> {
   id: string;
 }
+
+// 定义树节点类型
+export interface TreeNode {
+  label: string;
+  value: string;
+  key: string;
+  isLeaf?: boolean;
+  children?: TreeNode[];
+}

@@ -77,13 +77,13 @@ export function isImageFile(filename: string): boolean {
  * @param dirPath 目录路径
  * @returns Promise<Array<{filename: string, path: string}>>
  */
-export async function getImagesFromDirectory(dirPath: string): Promise<Array<{filename: string, path: string,width: number,height: number}>> {
-  const images: Array<{filename: string, path: string,width: number,height: number}> = [];
-  
+export async function getImagesFromDirectory(dirPath: string): Promise<Array<{filename: string, path: string}>> {
+  const images: Array<{filename: string, path: string}> = [];
+  const fullDirPath=path.join(env.SERVER_IMAGES_DIR, dirPath)
   try {
-    const exists = await fs.access(dirPath).then(() => true).catch(() => false);
+    const exists = await fs.access(fullDirPath).then(() => true).catch(() => false);
     if (!exists) {
-      throw new Error(`目录不存在: ${dirPath}`);
+      throw new Error(`目录不存在: ${fullDirPath}`);
     }
 
     async function processDirectory(currentPath: string): Promise<void> {
@@ -98,12 +98,9 @@ export async function getImagesFromDirectory(dirPath: string): Promise<Array<{fi
             if (stat.isDirectory()) {
               await processDirectory(fullPath);
             } else if (stat.isFile() && isImageFile(item)) {
-              const metadata = await getImageMetadata(fullPath);
               images.push({
                 filename: item,
-                path: path.relative(env.SERVER_IMAGES_DIR, fullPath),
-                width: metadata.width,
-                height: metadata.height,
+                path: path.relative(env.SERVER_IMAGES_DIR, fullPath)
               });
             }
           } catch (itemError) {
@@ -119,7 +116,7 @@ export async function getImagesFromDirectory(dirPath: string): Promise<Array<{fi
       }
     }
 
-    await processDirectory(dirPath);
+    await processDirectory(fullDirPath);
     return images;
   } catch (error) {
     if (error instanceof Error) {

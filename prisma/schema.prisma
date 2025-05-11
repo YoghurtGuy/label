@@ -43,21 +43,21 @@ model Session {
 }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    username      String?   @unique
-    password      String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    createdTasks  AnnotationTask[] @relation("CreatedTasks")
-    assignedTasks AnnotationTask[] @relation("AssignedTasks")
-    deletedImages Image[]
-    annotations   Annotation[]
-    datasets      Dataset[]
-    adminPermission Boolean @default(false)
+    id              String           @id @default(cuid())
+    name            String?
+    username        String?          @unique
+    password        String?
+    email           String?          @unique
+    emailVerified   DateTime?
+    image           String?
+    accounts        Account[]
+    sessions        Session[]
+    createdTasks    AnnotationTask[] @relation("CreatedTasks")
+    assignedTasks   AnnotationTask[] @relation("AssignedTasks")
+    deletedImages   Image[]
+    annotations     Annotation[]
+    datasets        Dataset[]
+    adminPermission Boolean          @default(false)
 }
 
 model VerificationToken {
@@ -69,38 +69,38 @@ model VerificationToken {
 }
 
 model Dataset {
-    id          String   @id @default(cuid())
+    id          String           @id @default(cuid())
     name        String
     description String?
     prompts     String?
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-    createdBy   User     @relation(fields: [createdById], references: [id])
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
+    createdBy   User             @relation(fields: [createdById], references: [id])
     createdById String
     images      Image[]
     tasks       AnnotationTask[]
-    type        DatasetType @default(OBJECT_DETECTION)
+    type        DatasetType      @default(OBJECT_DETECTION)
     labels      Label[]
-    
+
     @@index([createdAt])
     @@index([id])
 }
 
 model Image {
-    id          String   @id @default(cuid())
-    order       Int        // 数据集内图片顺序
+    id          String           @id @default(cuid())
+    order       Int // 数据集内图片顺序
     filename    String
     path        String
-    width       Int
-    height      Int
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-    dataset     Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+    url         String?
+    storage     ImageStorageType @default(SERVER)
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
+    dataset     Dataset          @relation(fields: [datasetId], references: [id], onDelete: Cascade)
     datasetId   String
     annotations Annotation[]
     taskOnImage TaskOnImage[]
-    deleteById String?
-    deleteBy   User?  @relation(fields: [deleteById], references: [id])
+    deleteById  String?
+    deleteBy    User?            @relation(fields: [deleteById], references: [id])
 
     @@index([filename])
     @@index([datasetId])
@@ -108,63 +108,61 @@ model Image {
 }
 
 model AnnotationTask {
-    id          String   @id @default(cuid())
-    name        String
-    description String?
+    id           String        @id @default(cuid())
+    name         String
+    description  String?
     // status      TaskStatus @default(PENDING)
     // progress    Float    @default(0)
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-    creator     User     @relation("CreatedTasks", fields: [creatorId], references: [id])
-    creatorId   String
-    assignedTo  User?    @relation("AssignedTasks", fields: [assignedToId], references: [id])
+    createdAt    DateTime      @default(now())
+    updatedAt    DateTime      @updatedAt
+    creator      User          @relation("CreatedTasks", fields: [creatorId], references: [id])
+    creatorId    String
+    assignedTo   User?         @relation("AssignedTasks", fields: [assignedToId], references: [id])
     assignedToId String?
-    dataset     Dataset  @relation(fields: [datasetId], references: [id])
-    datasetId   String
-    taskOnImage TaskOnImage[]
+    dataset      Dataset       @relation(fields: [datasetId], references: [id])
+    datasetId    String
+    taskOnImage  TaskOnImage[]
     // annotations Annotation[]
 
     @@index([datasetId])
 }
 
 model Annotation {
-    id          String   @id @default(cuid())
+    id          String           @id @default(cuid())
     type        AnnotationType
-    label       Label?   @relation(fields: [labelId], references: [id])
+    label       Label?           @relation(fields: [labelId], references: [id])
     labelId     String?
-    text        String?  // OCR文本内容
+    text        String? // OCR文本内容
     status      AnnotationStatus @default(IGNORE)
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-    createdBy   User?     @relation(fields: [createdById], references: [id])
+    createdAt   DateTime         @default(now())
+    updatedAt   DateTime         @updatedAt
+    createdBy   User?            @relation(fields: [createdById], references: [id])
     createdById String?
-    image       Image    @relation(fields: [imageId], references: [id], onDelete: Cascade)
+    image       Image            @relation(fields: [imageId], references: [id], onDelete: Cascade)
     imageId     String
     // task        AnnotationTask? @relation(fields: [taskId], references: [id])
     // taskId      String?
-    points      Point[]  // 用于矩形和多边形标注的点位
+    points      Point[] // 用于矩形和多边形标注的点位
 
     @@index([imageId])
     @@index([createdById])
 }
 
 model Point {
-    id            String     @id @default(cuid())
-    x             Float      // x坐标
-    y             Float      // y坐标
-    order         Int        // 点位的顺序，用于多边形
-    annotation    Annotation @relation(fields: [annotationId], references: [id], onDelete: Cascade)
-    annotationId  String
+    id           String     @id @default(cuid())
+    x            Float // x坐标
+    y            Float // y坐标
+    order        Int // 点位的顺序，用于多边形
+    annotation   Annotation @relation(fields: [annotationId], references: [id], onDelete: Cascade)
+    annotationId String
 
     @@index([annotationId, order])
 }
 
-// enum TaskStatus {
-//     PENDING
-//     IN_PROGRESS
-//     COMPLETED
-//     REVIEWING
-// }
+enum ImageStorageType {
+    SERVER
+    WEB
+}
 
 enum AnnotationType {
     RECTANGLE
@@ -185,24 +183,25 @@ enum AnnotationStatus {
 }
 
 model Label {
-    id          String   @id @default(cuid())
-    name        String   // 标签名称
-    color       String   // 标签颜色，用于UI显示
-    description String?  // 标签描述
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt
-    dataset     Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+    id          String       @id @default(cuid())
+    name        String // 标签名称
+    color       String // 标签颜色，用于UI显示
+    description String? // 标签描述
+    createdAt   DateTime     @default(now())
+    updatedAt   DateTime     @updatedAt
+    dataset     Dataset      @relation(fields: [datasetId], references: [id], onDelete: Cascade)
     datasetId   String
-    annotations Annotation[]  // 使用该标签的标注
+    annotations Annotation[] // 使用该标签的标注
 
-    @@unique([name, datasetId])  // 确保在同一数据集中标签名称唯一
+    @@unique([name, datasetId]) // 确保在同一数据集中标签名称唯一
     @@index([datasetId])
 }
 
 model TaskOnImage {
-    taskId String
+    taskId  String
     imageId String
-    task AnnotationTask @relation(fields: [taskId], references: [id])
-    image Image @relation(fields: [imageId], references: [id])
+    task    AnnotationTask @relation(fields: [taskId], references: [id])
+    image   Image          @relation(fields: [imageId], references: [id])
+
     @@id([taskId, imageId])
 }

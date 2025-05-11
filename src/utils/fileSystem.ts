@@ -3,17 +3,11 @@ import fs from 'fs';
 import path from 'path';
 
 import { env } from '@/env';
+import type{ TreeNode} from "@/types/dataset"
 // import logger from './logger';
 
 // const fileSystemLogger = logger.child({ name: "FILE_SYSTEM" });
-// 定义树节点类型
-export interface TreeNode {
-  label: string;
-  value: string;
-  key: string;
-  isLeaf?: boolean;
-  children?: TreeNode[];
-}
+
 
 /**
  * 获取文件夹树形结构

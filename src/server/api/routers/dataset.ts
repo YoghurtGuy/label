@@ -10,6 +10,7 @@ import { z } from "zod";
 import { env } from "@/env";
 import { type statsWithDatasetId } from "@/types/dataset";
 import type { ImportProgress } from "@/types/import";
+import { getFolderTree,getAistImages} from "@/utils/alist";
 import { getDirectoryTree } from "@/utils/fileSystem";
 import { getImagesFromDirectory } from "@/utils/image";
 // import logger from "@/utils/logger";
@@ -30,17 +31,15 @@ const datasetRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input }) => {
-      // 检查是否配置了服务器图像目录
-      if (!env.SERVER_IMAGES_DIR) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "服务器图像目录未配置",
-        });
-      }
       try {
-        const fullPath = path.join(env.SERVER_IMAGES_DIR, input.path);
-        const tree = getDirectoryTree(fullPath, input.maxDepth);
-        return tree;
+        const serverTree = getDirectoryTree(
+          path.join(env.SERVER_IMAGES_DIR, input.path),
+          input.maxDepth,
+        );
+        const alistTree = env.ALIST_IMAGES_DIR
+          ? await getFolderTree(input.path)
+          : [];
+        return serverTree.concat(alistTree);
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -196,7 +195,6 @@ const datasetRouter = createTRPCRouter({
       // 处理图像导入
       if (
         importMethod === "SERVER_FOLDER" &&
-        env.SERVER_IMAGES_DIR &&
         serverPath
       ) {
         try {
@@ -207,9 +205,11 @@ const datasetRouter = createTRPCRouter({
             path.join(env.SERVER_IMAGES_DIR, serverPath),
           );
           // 获取目录中的所有图像文件
-          const imageFiles = await getImagesFromDirectory(
-            path.join(env.SERVER_IMAGES_DIR, serverPath),
-          );
+          const imageFiles = serverPath.startsWith("web:")?(
+            await getAistImages(serverPath.slice(4))
+          )
+          : (await getImagesFromDirectory(serverPath));
+
           // const totalFiles = imageFiles.length;
           // let processedCount = 0;
           // const failedFiles: string[] = [];
@@ -218,6 +218,7 @@ const datasetRouter = createTRPCRouter({
               ...image,
               order: index,
               datasetId: dataset.id,
+              storage:serverPath.startsWith("web:")?"WEB":"SERVER"
             })),
           });
 
