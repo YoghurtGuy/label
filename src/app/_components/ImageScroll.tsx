@@ -8,7 +8,7 @@ export default function ImageScrollPage({
   src,
   height,
 }: {
-  src: string;
+  src?: string;
   height: number;
 }) {
   const parentRef = React.useRef<HTMLDivElement>(null);
@@ -45,13 +45,13 @@ export default function ImageScrollPage({
             transform: `translateY(${rowVirtualizer.getVirtualItems()[0]?.start ?? 0}px)`,
           }}
         >
+          {src&&
           <Image
             src={src}
-            alt="Large Image"
-            layout="fill"
-            objectFit="contain"
-            loading="lazy"
-          />
+            alt="待标注图像"
+            fill
+            unoptimized
+          />}
         </div>
       </div>
     </div>

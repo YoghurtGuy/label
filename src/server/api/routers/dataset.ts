@@ -38,7 +38,7 @@ const datasetRouter = createTRPCRouter({
               path.join(env.SERVER_IMAGES_DIR, input.path),
               input.maxDepth,
             );
-        const alistTree = env.ALIST_IMAGES_DIR
+        const alistTree = env.ALIST_TOKEN&&env.ALIST_URL
           ? await getFolderTree(input.path)
           : [];
         return serverTree.concat(alistTree);
