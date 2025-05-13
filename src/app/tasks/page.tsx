@@ -14,7 +14,6 @@ export default function TasksPage() {
     activeKey,
     tasksData,
     isLoading,
-    session,
     taskCount,
     page,
     pageSize,
@@ -24,27 +23,18 @@ export default function TasksPage() {
     handlePageChange,
   } = useTasks();
 
-  // 根据activeKey过滤任务
-  const filteredTasks = tasksData?.filter((task) => {
-    if (activeKey === "assigned") {
-      return task.assignedToId === session.data?.user.id;
-    } else {
-      return task.creatorId === session.data?.user.id;
-    }
-  });
-
   return (
     <>
       <ProList
         rowKey="id"
-        dataSource={filteredTasks}
+        dataSource={tasksData}
         loading={isLoading}
         pagination={{
           pageSize: pageSize,
           current: page,
           total: activeKey === "assigned" ? taskCount?.assigned : taskCount?.created,
+          onChange: (p) => handlePageChange(p)
         }}
-        onChange={(pagination) => handlePageChange(pagination.current, pagination.pageSize)}
         metas={{
           title: {
             dataIndex: "name",

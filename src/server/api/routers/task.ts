@@ -29,17 +29,13 @@ export const taskRouter = createTRPCRouter({
       z.object({
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).default(10),
+        type: z.enum(["assigned","created"]).default('assigned')
       }),
     )
     .query(async ({ ctx, input }) => {
       const tasks = await ctx.db.annotationTask.findMany({
         take: input.pageSize,
-        where: {
-          OR: [
-            { creatorId: ctx.session.user.id },
-            { assignedToId: ctx.session.user.id },
-          ],
-        },
+        where: input.type==="created"?{ creatorId: ctx.session.user.id }:{ assignedToId: ctx.session.user.id },
         skip: (input.page - 1) * input.pageSize,
         orderBy: {
           createdAt: "desc",

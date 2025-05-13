@@ -23,6 +23,7 @@ export const useTasks = () => {
   const { data: tasksData, isLoading } = api.task.getAll.useQuery({
     pageSize: pageSize,
     page: page,
+    type: activeKey,
   });
 
   const deleteTask = api.task.delete.useMutation({
