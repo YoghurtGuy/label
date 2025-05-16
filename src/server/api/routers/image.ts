@@ -146,7 +146,7 @@ export const imageRouter = createTRPCRouter({
         imageId: z.string(),
         annotations: z.array(
           z.object({
-            id: z.string(),
+            id: z.string().optional(),
             type: z.enum(["RECTANGLE", "POLYGON", "OCR"]),
             labelId: z.string().optional(),
             text: z.string().optional(),

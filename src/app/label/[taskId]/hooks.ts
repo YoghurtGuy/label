@@ -304,7 +304,6 @@ export const useImageAnnotation = (taskId: string) => {
         imageId: imageList[currentImageIndex]?.id,
         annotations: [
           {
-            id: "human-ocr",
             type: "OCR",
             points: [],
             text: vd.getValue(),
