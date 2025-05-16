@@ -59,9 +59,12 @@ export default function ImageScrollPage({
             <Image
               src={src}
               alt="待标注图像"
-              fill
+              // fill
+              height={10000}
+              width={10000}
               unoptimized
               onLoad={() => setLoading(false)}
+              priority={true}
             />
           )}
         </div>
