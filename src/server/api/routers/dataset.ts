@@ -101,7 +101,7 @@ const datasetRouter = createTRPCRouter({
       const dataset = await ctx.db.dataset.findFirst({
         where: {
           id: input,
-          createdById: ctx.session.user.id,
+          // createdById: ctx.session.user.id,
         },
         include: {
           labels: true,
