@@ -210,9 +210,7 @@ export const imageRouter = createTRPCRouter({
         await tx.annotation.deleteMany({
           where: {
             imageId,
-            createdById:{
-              not: null // 不删除预标注
-            }
+            createdById:ctx.session.user.id
           },
         });
 
