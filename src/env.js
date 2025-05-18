@@ -25,7 +25,7 @@ export const env = createEnv({
     ALIST_IMAGES_TRASH_DIR: z.string().default("/trash"),
     BUCKET_NAME: z.string().optional(),
     AWS_REGION: z.string().default("auto"),
-    AWS_ENDPOINT:z.string().url(),
+    AWS_ENDPOINT:z.string().url().optional(),
     AWS_ACCESS_KEY_ID: z.string().optional(),
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
     AWS_IMAGES_TRASH_DIR: z.string().default("/trash"),
