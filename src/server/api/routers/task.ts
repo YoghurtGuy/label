@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 export const taskRouter = createTRPCRouter({
@@ -450,6 +451,14 @@ export const taskRouter = createTRPCRouter({
         return {
           ...image,
           annotationCount,
+          src:
+            image.storage === "WEB" && env.ALIST_URL
+              ? `${env.ALIST_URL}/d${env.ALIST_IMAGES_DIR??""}${image.path}`
+              : image.storage === "S3" && env.AWS_URL
+                ? `${env.AWS_URL}/${image.path}`
+                : image.storage === "SERVER"
+                  ? `/img/${image.id}`
+                  : undefined,
         };
       });
 

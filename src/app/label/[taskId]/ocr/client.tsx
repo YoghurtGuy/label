@@ -25,7 +25,7 @@ export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
     <div className="flex">
       <div className="w-1/2">
         <ImageScroll
-          src={currentImage?.id ?`/img/${currentImage?.id}`: undefined}
+          src={currentImage?.src}
           height={683}
         />
       </div>

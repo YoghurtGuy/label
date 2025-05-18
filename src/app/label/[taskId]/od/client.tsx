@@ -70,7 +70,7 @@ export default function ObjectDetectionPage({
     );
   }
 
-  const imageUrl = currentImage ? `/img/${currentImage.id}` : "";
+  // const imageUrl = currentImage ? `/img/${currentImage.id}` : "";
 
   // 获取数据集的标签列表
   const datasetLabels = taskDetails?.dataset?.labels as Label[] | undefined;
@@ -82,7 +82,7 @@ export default function ObjectDetectionPage({
           {currentImage ? (
             <div className="relative overflow-hidden rounded-lg border">
               <AnnotationCanvas
-                imageUrl={imageUrl}
+                imageUrl={currentImage.src??""}
                 width={800}
                 height={600}
                 label={currentLabelInfo ?? { id: "", name: "", color: "", type: "select" }}

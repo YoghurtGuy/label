@@ -129,7 +129,8 @@ export async function GET(
       try {
         const raw_url = image.storage === "S3"? await getS3ImageUrl(image.path):await getAlistImageUrl(image.path);
         // if (raw_url) {
-        //   return NextResponse.redirect(raw_url, 307);
+        //   console.log(raw_url)
+        //   return NextResponse.redirect(raw_url, 302);
         // } else {
         //   return new NextResponse(`未配置相关变量`, { status: 500 });
         // }

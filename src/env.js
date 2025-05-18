@@ -29,6 +29,7 @@ export const env = createEnv({
     AWS_ACCESS_KEY_ID: z.string().optional(),
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
     AWS_IMAGES_TRASH_DIR: z.string().default("/trash"),
+    AWS_URL:z.string().url().optional()
   },
 
   /**
@@ -62,6 +63,7 @@ export const env = createEnv({
     AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_IMAGES_TRASH_DIR: process.env.AWS_IMAGES_TRASH_DIR,
+    AWS_URL:process.env.AWS_URL
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
