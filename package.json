@@ -25,6 +25,8 @@
     "@ant-design/pro-components": "^2.6.49",
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
     "@auth/prisma-adapter": "^2.9.0",
+    "@aws-sdk/client-s3": "^3.808.0",
+    "@aws-sdk/s3-request-presigner": "^3.808.0",
     "@heroui/react": "^2.7.6",
     "@prisma/client": "^6.5.0",
     "@t3-oss/env-nextjs": "^0.12.0",

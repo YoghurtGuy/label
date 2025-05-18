@@ -5,8 +5,9 @@ import { z } from "zod";
 
 import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { moveAlistFile } from "@/utils/alist";
+import { moveFile as moveAlistFile } from "@/utils/alist";
 import { moveFile } from "@/utils/fileSystem";
+import { moveFile as moveS3File } from "@/utils/s3";
 
 export const imageRouter = createTRPCRouter({
   // 获取下一张待标注图像
@@ -408,12 +409,19 @@ export const imageRouter = createTRPCRouter({
           }
           return true;
         } else {
-          const sourcePath = path.join(env.ALIST_IMAGES_DIR, image.path);
-          return moveAlistFile(
-            sourcePath,
-            env.ALIST_IMAGES_TRASH_DIR,
-            image.filename,
-          );
+          if (image.storage === "WEB") {
+            const sourcePath = path.join(env.ALIST_IMAGES_DIR, image.path);
+            return moveAlistFile(
+              sourcePath,
+              env.ALIST_IMAGES_TRASH_DIR,
+              image.filename,
+            );
+          } else {
+            return moveS3File(
+              path.join(image.path, image.filename),
+              path.join(env.AWS_IMAGES_TRASH_DIR, image.filename),
+            );
+          }
         }
       } catch (err) {
         console.error("移动失败:", err);

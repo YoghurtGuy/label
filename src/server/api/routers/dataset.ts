@@ -10,9 +10,16 @@ import { z } from "zod";
 import { env } from "@/env";
 import { type statsWithDatasetId } from "@/types/dataset";
 import type { ImportProgress } from "@/types/import";
-import { getFolderTree, getAistImages } from "@/utils/alist";
+import {
+  getFolderTree as getAlistFolderTree,
+  getImages as getAlistImages,
+} from "@/utils/alist";
 import { getDirectoryTree } from "@/utils/fileSystem";
 import { getImagesFromDirectory } from "@/utils/image";
+import {
+  getFolderTree as getS3FolderTree,
+  getImages as getS3Images,
+} from "@/utils/s3";
 // import logger from "@/utils/logger";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -32,16 +39,13 @@ const datasetRouter = createTRPCRouter({
     )
     .query(async ({ input }) => {
       try {
-        const serverTree = env.IS_ON_VERCEL
-          ? []
-          : getDirectoryTree(
-              path.join(env.SERVER_IMAGES_DIR, input.path),
-              input.maxDepth,
-            );
-        const alistTree = env.ALIST_TOKEN&&env.ALIST_URL
-          ? await getFolderTree(input.path)
-          : [];
-        return serverTree.concat(alistTree);
+        const serverTree = getDirectoryTree(
+          path.join(env.SERVER_IMAGES_DIR, input.path),
+          input.maxDepth,
+        );
+        const alistTree = await getAlistFolderTree(input.path);
+        const s3Tree = await getS3FolderTree();
+        return serverTree.concat(alistTree).concat(s3Tree);
       } catch (error) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -199,10 +203,12 @@ const datasetRouter = createTRPCRouter({
         try {
           // 获取目录中的所有图像文件
           const imageFiles = serverPath.startsWith("web:")
-            ? await getAistImages(serverPath.slice(4))
-            : env.IS_ON_VERCEL
-              ? []
-              : await getImagesFromDirectory(serverPath);
+            ? await getAlistImages(serverPath.slice(4))
+            : serverPath.startsWith("s3:")
+              ? await getS3Images(serverPath.slice(3))
+              : env.IS_ON_VERCEL
+                ? []
+                : await getImagesFromDirectory(serverPath);
 
           // const totalFiles = imageFiles.length;
           // let processedCount = 0;
@@ -212,7 +218,7 @@ const datasetRouter = createTRPCRouter({
               ...image,
               order: index,
               datasetId: dataset.id,
-              storage: serverPath.startsWith("web:") ? "WEB" : "SERVER",
+              storage: serverPath.startsWith("web:") ? "WEB" :serverPath.startsWith("s3:")?"S3": "SERVER",
             })),
           });
 

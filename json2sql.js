@@ -84,7 +84,10 @@ export const createAnnotationFromImageUrl = async (imageUrl, text, userId, taskI
       where: {
         path: {
           contains: imageUrl
-        }
+        },
+        // annotations: {
+        //   none: {}, // 没有任何关联的 annotation
+        // },
       }
     });
 

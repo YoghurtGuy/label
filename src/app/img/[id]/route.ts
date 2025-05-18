@@ -6,8 +6,9 @@ import { type NextRequest, NextResponse } from "next/server";
 import { env } from "@/env";
 import { auth } from "@/server/auth";
 import { db } from "@/server/db";
-import { getImageUrl } from "@/utils/alist";
+import { getImageUrl as getAlistImageUrl } from "@/utils/alist";
 import { isImageFile, getMimeTypeFromPath } from "@/utils/image";
+import { getImageUrl as getS3ImageUrl } from "@/utils/s3";
 // import logger from "@/utils/logger";
 
 /**
@@ -126,11 +127,30 @@ export async function GET(
       }
     } else {
       try {
-        const raw_url = await getImageUrl(image.path);
+        const raw_url = image.storage === "S3"? await getS3ImageUrl(image.path):await getAlistImageUrl(image.path);
+        // if (raw_url) {
+        //   return NextResponse.redirect(raw_url, 307);
+        // } else {
+        //   return new NextResponse(`未配置相关变量`, { status: 500 });
+        // }
         if (raw_url) {
-          return NextResponse.redirect(raw_url, 302);
-        } else {
-          return new NextResponse(`未配置相关变量`, { status: 500 });
+          const res = await fetch(raw_url);
+          if (!res.ok) {
+            return new NextResponse(`从 AList 获取图片失败: ${res.statusText}`, {
+              status: res.status,
+            });
+          }
+        
+          const buffer = Buffer.from(await res.arrayBuffer());
+          const contentType = res.headers.get("Content-Type") ?? "application/octet-stream";
+
+          console.log(`图像ID: ${imageId}, 成功获取图像${raw_url}`);
+          return new NextResponse(buffer, {
+            headers: {
+              "Content-Type": contentType,
+              "Cache-Control": "public, max-age=31536000",
+            },
+          });
         }
       } catch (err) {
         // 安全地处理错误

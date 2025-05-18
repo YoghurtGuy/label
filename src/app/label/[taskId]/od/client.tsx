@@ -17,7 +17,7 @@ export default function ObjectDetectionPage({
 
   const {
     imageList,
-    currentImageId,
+    currentImage,
     // setCurrentImageId,
     annotations,
     selectedAnnotation,
@@ -70,7 +70,6 @@ export default function ObjectDetectionPage({
     );
   }
 
-  const currentImage = imageList.find((img) => img.id === currentImageId);
   const imageUrl = currentImage ? `/img/${currentImage.id}` : "";
 
   // 获取数据集的标签列表
@@ -110,7 +109,7 @@ export default function ObjectDetectionPage({
             imageIndex={currentImageIndex}
             imageCount={imageCount}
             handleImageChange={handleImageChange}
-            deleteImage={()=>handleDeleteImage(currentImageId)}
+            deleteImage={()=>handleDeleteImage(currentImage?.id)}
           />
           <div className="mb-4">
             <LabelSelector

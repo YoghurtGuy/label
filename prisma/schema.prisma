@@ -162,6 +162,7 @@ model Point {
 enum ImageStorageType {
     SERVER
     WEB
+    S3
 }
 
 enum AnnotationType {

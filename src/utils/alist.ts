@@ -95,7 +95,7 @@ export async function list(path: string): Promise<listContent[]> {
   }
 }
 // 递归获取所有图片文件路径
-export async function getAistImages(
+export async function getImages(
   dir_path: string,
 ): Promise<Array<{ filename: string; path: string }>> {
   const fullPath = path.join(env.ALIST_IMAGES_DIR, dir_path);
@@ -107,7 +107,7 @@ export async function getAistImages(
       const itemRelativePath = path.join(dir_path, item.name);
       if (item.is_dir) {
         // 递归进入子文件夹
-        const subImages = await getAistImages(itemRelativePath);
+        const subImages = await getImages(itemRelativePath);
         images = images.concat(subImages);
       } else if (isImageFile(item.name)) {
         images.push({
@@ -125,6 +125,9 @@ export async function getAistImages(
 }
 
 export async function getFolderTree(dir_path = "/"): Promise<TreeNode[]> {
+  if(!env.ALIST_TOKEN||!env.ALIST_URL){
+    return []
+  }
   const fullPath = path.join(env.ALIST_IMAGES_DIR, dir_path);
   const folders = await list(fullPath);
   
@@ -155,7 +158,7 @@ export async function getFolderTree(dir_path = "/"): Promise<TreeNode[]> {
   }
 }
 
-export async function moveAlistFile(
+export async function moveFile(
   src_dir: string,
   dst_dir: string,
   name: string,

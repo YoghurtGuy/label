@@ -6,7 +6,7 @@ import Vditor from "@/app/_components/vditor";
 import { useImageAnnotation } from "../hooks";
 export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
   const {
-    currentImageId,
+    currentImage,
     prevImage,
     nextImage,
     saveOcrAnnotations,
@@ -19,12 +19,15 @@ export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
     currentImageIndex,
     imageCount,
     handleImageChange,
-  handleDeleteImage,
+    handleDeleteImage,
   } = useImageAnnotation(taskId);
   return (
     <div className="flex">
       <div className="w-1/2">
-        <ImageScroll src={currentImageId?`/img/${currentImageId}`:undefined} height={683} />
+        <ImageScroll
+          src={currentImage?.id ?`/img/${currentImage?.id}`: undefined}
+          height={683}
+        />
       </div>
       <div className="flex w-1/2 flex-col gap-4">
         <ImageControl
@@ -37,11 +40,11 @@ export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
           imageIndex={currentImageIndex}
           imageCount={imageCount}
           handleImageChange={handleImageChange}
-          deleteImage={()=>handleDeleteImage(currentImageId)}
+          deleteImage={() => handleDeleteImage(currentImage?.id)}
         />
         <Vditor
           initialValue={ocrOriginalText}
-          imageId={currentImageId??`${currentImageIndex}`}
+          imageId={currentImage?.id ?? `${currentImageIndex}`}
           vd={vd}
           setVd={setVd}
         />

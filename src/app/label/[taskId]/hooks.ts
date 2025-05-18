@@ -336,8 +336,9 @@ export const useImageAnnotation = (taskId: string) => {
 
   return {
     imageList,
-    currentImageId: imageList[currentImageIndex]?.id,
+    // currentImageId: imageList[currentImageIndex]?.id,
     currentImageIndex,
+    currentImage:imageList[currentImageIndex],
     imageCount: imageList.length,
     // setCurrentImageId,
     annotations,

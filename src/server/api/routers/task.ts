@@ -5,23 +5,22 @@ import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 
 export const taskRouter = createTRPCRouter({
   // 获取任务数量
-  getCount: protectedProcedure
-    .query(async ({ ctx }) => {
-      const assignedCount = await ctx.db.annotationTask.count({
-        where: {
-          assignedToId: ctx.session.user.id,
-        },
-      });
-      const createdCount = await ctx.db.annotationTask.count({
-        where: {
-          creatorId: ctx.session.user.id,
-        },
-      });
-      return {
-        assigned: assignedCount,
-        created: createdCount,
-      };
-    }),
+  getCount: protectedProcedure.query(async ({ ctx }) => {
+    const assignedCount = await ctx.db.annotationTask.count({
+      where: {
+        assignedToId: ctx.session.user.id,
+      },
+    });
+    const createdCount = await ctx.db.annotationTask.count({
+      where: {
+        creatorId: ctx.session.user.id,
+      },
+    });
+    return {
+      assigned: assignedCount,
+      created: createdCount,
+    };
+  }),
 
   // 获取任务列表
   getAll: protectedProcedure
@@ -29,13 +28,16 @@ export const taskRouter = createTRPCRouter({
       z.object({
         page: z.number().min(1).default(1),
         pageSize: z.number().min(1).default(10),
-        type: z.enum(["assigned","created"]).default('assigned')
+        type: z.enum(["assigned", "created"]).default("assigned"),
       }),
     )
     .query(async ({ ctx, input }) => {
       const tasks = await ctx.db.annotationTask.findMany({
         take: input.pageSize,
-        where: input.type==="created"?{ creatorId: ctx.session.user.id }:{ assignedToId: ctx.session.user.id },
+        where:
+          input.type === "created"
+            ? { creatorId: ctx.session.user.id }
+            : { assignedToId: ctx.session.user.id },
         skip: (input.page - 1) * input.pageSize,
         orderBy: {
           createdAt: "desc",
@@ -79,12 +81,19 @@ export const taskRouter = createTRPCRouter({
 
         // 获取已标注的图像数量（有标注的图像）
         const annotatedImageCount = task.taskOnImage.filter(
-          (toi) => toi.image.annotations.filter((a) => a.createdById==task.assignedToId).length > 0,
+          (toi) =>
+            toi.image.annotations.filter(
+              (a) => a.createdById == task.assignedToId,
+            ).length > 0,
         ).length;
 
         // 获取标注总数
         const annotationCount = task.taskOnImage.reduce(
-          (total, toi) => total + toi.image.annotations.filter((a) => a.createdById==task.assignedToId).length,
+          (total, toi) =>
+            total +
+            toi.image.annotations.filter(
+              (a) => a.createdById == task.assignedToId,
+            ).length,
           0,
         );
 
@@ -236,7 +245,12 @@ export const taskRouter = createTRPCRouter({
             });
           }
           // 获取指定范围的图像
-          const images = dataset.images.filter((image)=>image.order>=startIndex&&image.order<=endIndex&&image.deleteById===null);
+          const images = dataset.images.filter(
+            (image) =>
+              image.order >= startIndex &&
+              image.order <= endIndex &&
+              image.deleteById === null,
+          );
           // 创建任务
           await tx.annotationTask.create({
             data: {
@@ -251,7 +265,6 @@ export const taskRouter = createTRPCRouter({
                 })),
               },
             },
-
           });
         }
       });
@@ -426,7 +439,7 @@ export const taskRouter = createTRPCRouter({
               taskId: input,
             },
           },
-          deleteById: null
+          deleteById: null,
         },
         include: {
           annotations: true,
@@ -467,6 +480,6 @@ export const taskRouter = createTRPCRouter({
           createdAt: "desc",
         },
       });
-      return annotation?.imageId??null;
+      return annotation?.imageId ?? null;
     }),
 });

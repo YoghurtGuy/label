@@ -5,6 +5,7 @@ import {
   UploadOutlined,
   FolderOutlined,
   CompassOutlined,
+  AmazonOutlined,
 } from "@ant-design/icons";
 import {
   ProForm,
@@ -215,6 +216,7 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
                     <div className="flex items-center gap-2" >
                       <div>{`${nodeData.label}`}</div>
                       {nodeData.value?.toString().startsWith("web:")&&<CompassOutlined />}
+                      {nodeData.value?.toString().startsWith("s3:")&&<AmazonOutlined />}
                     </div>
                   ),
                 }}
