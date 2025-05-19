@@ -16,7 +16,6 @@ const Navbar = () => {
   const { data: session } = useSession();
 
   const pathSegments = pathname.split('/').filter(Boolean)
-  console.log(pathSegments)
 
   const userMenuItems = [
     {
