@@ -6,7 +6,7 @@ import "vditor/dist/index.css";
 
 const App = ({
   initialValue,
-  imageId,
+  // imageId,
   vd,
   setVd,
 }: {
@@ -16,7 +16,7 @@ const App = ({
   setVd: (vd: Vditor | undefined) => void;
 }) => {
   useEffect(() => {
-    const vditor = new Vditor(`vditor-${imageId}`, {
+    const vditor = new Vditor(`vditor`, {
       //   toolbarConfig: {
       //     hide: true,
       //   },
@@ -44,6 +44,9 @@ const App = ({
           inlineDigit: true,
         },
       },
+      cache:{
+        enable: false
+      }
     });
     // Clear the effect
     return () => {
@@ -51,7 +54,7 @@ const App = ({
       setVd(undefined);
     };
   }, []);
-  return <div id={`vditor-${imageId}`} className="vditor" />;
+  return <div id={`vditor`} className="vditor" />;
 };
 
 export default App;

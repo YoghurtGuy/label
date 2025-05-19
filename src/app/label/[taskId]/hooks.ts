@@ -109,7 +109,7 @@ export const useImageAnnotation = (taskId: string) => {
         imageAnnotations[imageAnnotations.length - 1]?.ocrText ?? "无标注",
       );
       vd?.setValue(
-        imageAnnotations[imageAnnotations.length - 1]?.ocrText ?? "无标注",
+        imageAnnotations[imageAnnotations.length - 1]?.ocrText ?? "无标注",true
       );
     } else {
       setOcrOriginalText("无标注");
