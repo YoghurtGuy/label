@@ -1,5 +1,5 @@
 "use client";
-import { useEffect} from "react";
+import { useEffect } from "react";
 
 import Vditor from "vditor";
 import "vditor/dist/index.css";
@@ -17,9 +17,9 @@ const App = ({
 }) => {
   useEffect(() => {
     const vditor = new Vditor(`vditor-${imageId}`, {
-    //   toolbarConfig: {
-    //     hide: true,
-    //   },
+      //   toolbarConfig: {
+      //     hide: true,
+      //   },
       toolbar: [
         "headings",
         "bold",
@@ -38,6 +38,11 @@ const App = ({
       after: () => {
         vditor.setValue(initialValue);
         setVd(vditor);
+      },
+      preview: {
+        math: {
+          inlineDigit: true,
+        },
       },
     });
     // Clear the effect
