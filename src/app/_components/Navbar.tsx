@@ -4,7 +4,7 @@ import { UserOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons
 import { Layout, Menu, Dropdown, Avatar, Button } from 'antd';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter,usePathname} from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import '@ant-design/v5-patch-for-react-19'
 
@@ -12,13 +12,18 @@ const { Header } = Layout;
 
 const Navbar = () => {
   const router = useRouter();
+  const pathname = usePathname()
   const { data: session } = useSession();
+
+  const pathSegments = pathname.split('/').filter(Boolean)
+  console.log(pathSegments)
 
   const userMenuItems = [
     {
       key: 'settings',
       icon: <SettingOutlined />,
       label: '设置',
+      disabled: true,
       onClick: () => router.push('/settings'),
     },
     {
@@ -42,6 +47,11 @@ const Navbar = () => {
       key: 'tasks',
       label: <Link href="/tasks">任务</Link>,
     },
+    {
+      key: 'label',
+      label: '标注',
+      disabled: pathSegments[0]!=="label",
+    }
   ];
 
   return (
@@ -53,6 +63,7 @@ const Navbar = () => {
           mode="horizontal"
           items={menuItems}
           className="border-none"
+          selectedKeys={[pathSegments[0]??"home"]}
         />
       </div>
       <div className="flex items-center">
