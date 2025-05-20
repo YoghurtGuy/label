@@ -21,10 +21,12 @@ const config = {
   output: "standalone",
   images:{
     remotePatterns,
-  }
-  // experimental: {
-  //   serverActions: true,
-  // },
+  },
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '8mb',
+    },
+  },
 };
 
 export default config;

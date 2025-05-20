@@ -49,6 +49,7 @@ export interface CreateDatasetInput {
   importMethod: ImportMethod;
   serverPath?: string;
   prompts?: string;
+  preAnnotation?: File;
 }
 
 export interface UpdateDatasetInput

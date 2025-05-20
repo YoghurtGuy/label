@@ -156,6 +156,39 @@ export const useDatasetForm = (props: DatasetFormProps) => {
       onCancel();
     },
   });
+  const getFileData = async () => {
+    const fileContent = fileList[0]?.originFileObj;
+    if (!fileContent) {
+      return undefined;
+    }
+
+    // 读取文件内容
+    const text = await fileContent.text();
+    const lines = text.split("\n").filter((line: string) => line.trim());
+
+    // 解析每行内容为 JSON 对象
+    const preAnnotationData = lines.map((line: string) => {
+      try {
+        const data = JSON.parse(line) as { imageurl: string; output: string };
+        if (!data.imageurl || !data.output) {
+          app.message.error("预标注数据格式错误：缺少必要字段");
+          throw new Error("预标注数据格式错误：缺少必要字段");
+        }
+        return {
+          imageurl: data.imageurl,
+          output: data.output,
+        } as const;
+      } catch (error) {
+        app.message.error(
+          `预标注数据解析错误：${error instanceof Error ? error.message : "未知错误"}`,
+        );
+        throw new Error(
+          `预标注数据解析错误：${error instanceof Error ? error.message : "未知错误"}`,
+        )
+      }
+    });
+    return preAnnotationData;
+  };
 
   const handleFormFinish = async (values: CreateDatasetInput) => {
     const formValues = values;
@@ -170,6 +203,7 @@ export const useDatasetForm = (props: DatasetFormProps) => {
 
       if (initialValues?.id) {
         // 更新数据集
+
         result = await updateDataset.mutateAsync({
           id: initialValues.id,
           name: submitValues.name,
@@ -177,6 +211,7 @@ export const useDatasetForm = (props: DatasetFormProps) => {
           type: submitValues.type,
           labels: submitValues.labels,
           prompts: submitValues.prompts,
+          preAnnotation: await getFileData(),
         });
       } else {
         // 创建数据集
@@ -188,8 +223,6 @@ export const useDatasetForm = (props: DatasetFormProps) => {
           prompts: submitValues.prompts,
           importMethod: submitValues.importMethod,
           serverPath: submitValues.serverPath,
-
-          // TODO：上传图像，新建文件夹
         });
       }
 

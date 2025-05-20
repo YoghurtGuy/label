@@ -134,10 +134,11 @@ export async function GET(
         // } else {
         //   return new NextResponse(`未配置相关变量`, { status: 500 });
         // }
+        console.log(raw_url)
         if (raw_url) {
           const res = await fetch(raw_url);
           if (!res.ok) {
-            return new NextResponse(`从 AList 获取图片失败: ${res.statusText}`, {
+            return new NextResponse(`远程获取图片失败: ${res.statusText}`, {
               status: res.status,
             });
           }

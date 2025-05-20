@@ -458,8 +458,8 @@ export const taskRouter = createTRPCRouter({
           src:
             image.storage === "WEB" && env.ALIST_URL
               ? `${env.ALIST_URL}/d${env.ALIST_IMAGES_DIR ?? ""}${image.path}`
-              : image.storage === "S3" && env.AWS_URL
-                ? `${env.AWS_URL}/${image.path}`
+              : image.storage === "S3"
+                ? `${env.AWS_URL ?? env.AWS_ENDPOINT}/${env.AWS_IMAGES_DIR ? env.AWS_IMAGES_DIR + "/" : ""}${image.path}`
                 : image.storage === "SERVER"
                   ? `/img/${image.id}`
                   : undefined,
@@ -498,10 +498,7 @@ export const taskRouter = createTRPCRouter({
   getRank: publicProcedure.query(async ({ ctx }) => {
     const users = await ctx.db.user.findMany({
       where: {
-        OR: [
-          { assignedTasks: { some: {} } },
-          { annotations: { some: {} } }
-        ]
+        OR: [{ assignedTasks: { some: {} } }, { annotations: { some: {} } }],
       },
       select: {
         id: true,
@@ -510,50 +507,49 @@ export const taskRouter = createTRPCRouter({
           select: {
             taskOnImage: {
               select: {
-                imageId: true
-              }
-            }
-          }
+                imageId: true,
+              },
+            },
+          },
         },
         annotations: {
           select: {
-            imageId: true
-          }
+            imageId: true,
+          },
+        },
+      },
+    });
+
+    const rank = users
+      .map((user) => {
+        // 计算分配的总图像数（去重）
+        const assignedImages = new Set(
+          user.assignedTasks.flatMap((task) =>
+            task.taskOnImage.map((toi) => toi.imageId),
+          ),
+        );
+
+        // 计算已标注的图像数（去重）
+        const annotatedImages = new Set(user.annotations.map((a) => a.imageId));
+
+        const assignedCount = assignedImages.size;
+        const annotatedCount = annotatedImages.size;
+
+        return {
+          id: user.id,
+          name: user.name,
+          annotatedImageCount: annotatedCount,
+          assignedImageCount: assignedCount,
+          progress: assignedCount > 0 ? annotatedCount / assignedCount : 0,
+        };
+      })
+      .filter((user) => user.assignedImageCount > 0) // 只保留有分配任务的用户
+      .sort((a, b) => {
+        if (b.annotatedImageCount !== a.annotatedImageCount) {
+          return b.annotatedImageCount - a.annotatedImageCount;
         }
-      }
-    });
-
-    const rank = users.map(user => {
-      // 计算分配的总图像数（去重）
-      const assignedImages = new Set(
-        user.assignedTasks.flatMap(task => 
-          task.taskOnImage.map(toi => toi.imageId)
-        )
-      );
-      
-      // 计算已标注的图像数（去重）
-      const annotatedImages = new Set(
-        user.annotations.map(a => a.imageId)
-      );
-
-      const assignedCount = assignedImages.size;
-      const annotatedCount = annotatedImages.size;
-      
-      return {
-        id: user.id,
-        name: user.name,
-        annotatedImageCount: annotatedCount,
-        assignedImageCount: assignedCount,
-        progress: assignedCount > 0 ? (annotatedCount / assignedCount) : 0
-      };
-    })
-    .filter(user => user.assignedImageCount > 0) // 只保留有分配任务的用户
-    .sort((a, b) => {
-      if (b.annotatedImageCount !== a.annotatedImageCount) {
-        return b.annotatedImageCount - a.annotatedImageCount;
-      }
-      return b.progress - a.progress;
-    });
+        return b.progress - a.progress;
+      });
 
     return rank;
   }),

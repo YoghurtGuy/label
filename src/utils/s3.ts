@@ -46,7 +46,7 @@ export async function getImageUrl(key: string): Promise<string | undefined> {
   try {
     const command = new GetObjectCommand({
       Bucket: env.BUCKET_NAME,
-      Key: key,
+      Key: env.AWS_IMAGES_DIR?path.join(env.AWS_IMAGES_DIR,key):key,
     });
     return await getSignedUrl(s3Client, command, { expiresIn: 3600 });
   } catch (error) {
@@ -80,7 +80,7 @@ export async function getImageUrl(key: string): Promise<string | undefined> {
 // }
 
 /**
- * 递归获取所有图片文件
+ * 获取所有图片文件
  * @param prefix 要搜索的前缀
  * @returns 图片文件列表
  */
@@ -89,6 +89,9 @@ export async function getImages(
 ): Promise<Array<{ filename: string; path: string }>> {
   const s3Client = await getS3Client();
   if (s3Client === undefined) return [];
+  let prefix_true=prefix
+  if(env.AWS_IMAGES_DIR)
+    prefix_true = path.join(env.AWS_IMAGES_DIR, prefix);
 
   const images: Array<{ filename: string; path: string }> = [];
   let continuationToken: string | undefined = undefined;
@@ -97,7 +100,7 @@ export async function getImages(
     while (true) {
       const command = new ListObjectsV2Command({
         Bucket: env.BUCKET_NAME,
-        Prefix: prefix,
+        Prefix: prefix_true,
         ContinuationToken: continuationToken,
       } as ListObjectsV2CommandInput);
 
@@ -105,9 +108,10 @@ export async function getImages(
 
       for (const item of response.Contents ?? []) {
         if (item.Key && isImageFile(item.Key)) {
+          const relativePath= env.AWS_IMAGES_DIR?path.relative(env.AWS_IMAGES_DIR,item.Key):item.Key
           images.push({
             filename: path.basename(item.Key),
-            path: item.Key,
+            path: relativePath,
           });
         }
       }
@@ -133,16 +137,20 @@ export async function getImages(
  */
 export async function getFolderTree(
   prefix: string | undefined = undefined,
+  isFirst=true
 ): Promise<TreeNode[]> {
   const s3Client = await getS3Client();
   if (s3Client === undefined) {
     return [];
   }
+  let prefix_true=prefix;
+  if(isFirst&&env.AWS_IMAGES_DIR)
+    prefix_true = prefix?path.join(env.AWS_IMAGES_DIR, prefix):env.AWS_IMAGES_DIR;
 
   try {
     const command = new ListObjectsV2Command({
       Bucket: env.BUCKET_NAME,
-      Prefix: prefix,
+      Prefix: prefix_true,
       Delimiter: "/",
     });
 
@@ -152,18 +160,18 @@ export async function getFolderTree(
     for (const commonPrefix of response.CommonPrefixes ?? []) {
       if (commonPrefix.Prefix) {
         const folderName = path.basename(commonPrefix.Prefix.slice(0, -1));
-        const children = await getFolderTree(commonPrefix.Prefix);
+        const children = await getFolderTree(commonPrefix.Prefix, false);
 
+        const relativePath= env.AWS_IMAGES_DIR?path.relative(env.AWS_IMAGES_DIR,commonPrefix.Prefix):commonPrefix.Prefix
         tree.push({
           label: folderName,
-          value: `s3:${commonPrefix.Prefix}`,
-          key: `s3:${commonPrefix.Prefix}`,
+          value: `s3:${relativePath}`,
+          key: `s3:${relativePath}`,
           isLeaf: children.length === 0,
           children: children.length > 0 ? children : undefined,
         });
       }
     }
-
     return tree;
   } catch (error) {
     console.error("获取文件夹树出错:", error);

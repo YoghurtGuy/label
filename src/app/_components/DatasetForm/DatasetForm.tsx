@@ -15,6 +15,7 @@ import {
   ProFormList,
   ProFormGroup,
   ProFormTreeSelect,
+  ProFormUploadDragger
 } from "@ant-design/pro-components";
 import { Modal, Upload, Button, ColorPicker, message } from "antd";
 // import type { Color } from "antd/es/color-picker";
@@ -202,7 +203,6 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
               </ProForm.Item>
             )}
 
-            {/* TODO: 服务器文件夹展示 */}
             {importMethod === "SERVER_FOLDER" && (
               <ProFormTreeSelect
                 name="serverPath"
@@ -213,10 +213,14 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
                   loading: isLoadingDirectoryTree,
                   treeData: directoryTreeData,
                   treeTitleRender: (nodeData) => (
-                    <div className="flex items-center gap-2" >
+                    <div className="flex items-center gap-2">
                       <div>{`${nodeData.label}`}</div>
-                      {nodeData.value?.toString().startsWith("web:")&&<CompassOutlined />}
-                      {nodeData.value?.toString().startsWith("s3:")&&<AmazonOutlined />}
+                      {nodeData.value?.toString().startsWith("web:") && (
+                        <CompassOutlined />
+                      )}
+                      {nodeData.value?.toString().startsWith("s3:") && (
+                        <AmazonOutlined />
+                      )}
                     </div>
                   ),
                 }}
@@ -248,6 +252,24 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
               </div>
             )} */}
           </>
+        )}
+        {initialValues && (
+          <ProFormUploadDragger
+            fieldProps={{
+              accept: ".jsonl",
+              maxCount: 1,
+              fileList: fileList,
+              onChange: ({ fileList }) => setFileList(fileList),
+              beforeUpload: (file: File) => {
+                const isJsonl = file.name.endsWith(".jsonl");
+                if (!isJsonl) {
+                  message.error(`${file.name} 不是有效的预标注文件`);
+                }
+                return isJsonl ?? Upload.LIST_IGNORE;
+              }
+            }}
+            extra="支持小于100mb的 .jsonl 格式的预标注文件，每行包含 imageUrl 和 output 字段"
+          />
         )}
       </ProForm>
     </Modal>

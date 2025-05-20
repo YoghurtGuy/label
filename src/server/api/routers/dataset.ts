@@ -1,6 +1,7 @@
 import EventEmitter from "events";
 import path from "path";
 
+import type { AnnotationStatus, AnnotationType } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 import { observable } from "@trpc/server/observable";
 import { z } from "zod";
@@ -218,7 +219,11 @@ const datasetRouter = createTRPCRouter({
               ...image,
               order: index,
               datasetId: dataset.id,
-              storage: serverPath.startsWith("web:") ? "WEB" :serverPath.startsWith("s3:")?"S3": "SERVER",
+              storage: serverPath.startsWith("web:")
+                ? "WEB"
+                : serverPath.startsWith("s3:")
+                  ? "S3"
+                  : "SERVER",
             })),
           });
 
@@ -343,6 +348,14 @@ const datasetRouter = createTRPCRouter({
           )
           .optional(),
         prompts: z.string().optional().nullable(),
+        preAnnotation: z
+          .array(
+            z.object({
+              imageurl: z.string(),
+              output: z.string(),
+            }),
+          )
+          .optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -401,7 +414,83 @@ const datasetRouter = createTRPCRouter({
           });
         }
       }
+      if (input.preAnnotation) {
+        try {
+          // 解析每行JSON并提取所需字段
+          const annotations = input.preAnnotation
+            .map((data) => {
+              try {
+                // 处理 output 字符串，删除最前面的 ```markdown\n 和最后面的 \n```
+                let processedOutput = data.output ?? "";
+                if (processedOutput.startsWith("```markdown\n")) {
+                  processedOutput = processedOutput.substring(
+                    "```markdown\n".length,
+                  );
+                }
+                if (processedOutput.endsWith("\n```")) {
+                  processedOutput = processedOutput.substring(
+                    0,
+                    processedOutput.length - "\n```".length,
+                  );
+                }
 
+                return {
+                  imageUrl: data.imageurl ?? "",
+                  text: processedOutput,
+                };
+              } catch (error) {
+                console.error("解析JSON行失败:", error);
+                return null;
+              }
+            })
+            .filter(Boolean);
+
+          // 一次性查出所有相关 image
+          const images = await ctx.db.image.findMany({
+            where: {
+              datasetId: dataset.id,
+            },
+          });
+
+          // 构建 path -> imageId 的映射
+          const imageMap = new Map<string, (typeof images)[0]>();
+          for (const image of images) {
+            imageMap.set(image.path, image);
+          }
+          const annotationsToCreate = [];
+
+          for (const annotation of annotations) {
+            if (!annotation) continue;
+            const matchedImage = [...imageMap.values()].find((image) =>
+              image.path.includes(annotation.imageUrl),
+            );
+
+            if (matchedImage) {
+              annotationsToCreate.push({
+                type:
+                  dataset.type === "OCR"
+                    ? "OCR"
+                    : ("RECTANGLE" as AnnotationType),
+                text: annotation.text,
+                status: "PENDING" as AnnotationStatus,
+                imageId: matchedImage.id,
+              });
+            }
+          }
+
+          if (annotationsToCreate.length > 0) {
+            await ctx.db.annotation.createMany({
+              data: annotationsToCreate,
+            });
+          }
+        } catch (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "处理预标注文件失败",
+            cause: error,
+          });
+        }
+      }
       // 返回更新后的数据集（包含标签）
       return await ctx.db.dataset.findUnique({
         where: { id },
