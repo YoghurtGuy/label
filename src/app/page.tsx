@@ -1,18 +1,13 @@
-import { auth } from "@/server/auth";
-import { HydrateClient } from "@/trpc/server";
+import Rank from "@/app/_components/Rank";
 
 export default async function Home() {
-  const session = await auth();
-
   return (
-    <HydrateClient>
-      <main>
-          {session?.user && (
-            <div>
-              <p>{session.user.name}</p>
-            </div>
-          )}
-      </main>
-    </HydrateClient>
+      <div className="flex items-center justify-center" style={{ height: 'calc(100vh - 64px)'}}>
+        <div className="w-1/3">
+          <Rank/>
+        </div>
+        {/* <div className="w-2/3">
+        </div> */}
+      </div>
   );
 }

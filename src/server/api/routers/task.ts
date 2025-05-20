@@ -2,7 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { env } from "@/env";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "@/server/api/trpc";
 
 export const taskRouter = createTRPCRouter({
   // 获取任务数量
@@ -453,7 +457,7 @@ export const taskRouter = createTRPCRouter({
           annotationCount,
           src:
             image.storage === "WEB" && env.ALIST_URL
-              ? `${env.ALIST_URL}/d${env.ALIST_IMAGES_DIR??""}${image.path}`
+              ? `${env.ALIST_URL}/d${env.ALIST_IMAGES_DIR ?? ""}${image.path}`
               : image.storage === "S3" && env.AWS_URL
                 ? `${env.AWS_URL}/${image.path}`
                 : image.storage === "SERVER"
@@ -491,4 +495,25 @@ export const taskRouter = createTRPCRouter({
       });
       return annotation?.imageId ?? null;
     }),
+  getRank: publicProcedure.query(async ({ ctx }) => {
+    const rank = await ctx.db.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            annotations: true,
+          },
+        },
+      },
+    });
+    const sorted = rank
+      .map((user) => ({
+        id: user.id,
+        name: user.name,
+        annotationCount: user._count.annotations,
+      }))
+      .sort((a, b) => b.annotationCount - a.annotationCount);
+    return sorted;
+  }),
 });
