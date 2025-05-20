@@ -6,6 +6,8 @@ import {
   GetObjectCommand,
   CopyObjectCommand,
   DeleteObjectCommand,
+  type ListObjectsV2CommandInput,
+  type ListObjectsV2CommandOutput,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -86,26 +88,34 @@ export async function getImages(
   prefix: string,
 ): Promise<Array<{ filename: string; path: string }>> {
   const s3Client = await getS3Client();
-  if (s3Client === undefined) {
-    return [];
-  }
+  if (s3Client === undefined) return [];
+
+  const images: Array<{ filename: string; path: string }> = [];
+  let continuationToken: string | undefined = undefined;
 
   try {
-    const command = new ListObjectsV2Command({
-      Bucket: env.BUCKET_NAME,
-      Prefix: prefix,
-    });
+    while (true) {
+      const command = new ListObjectsV2Command({
+        Bucket: env.BUCKET_NAME,
+        Prefix: prefix,
+        ContinuationToken: continuationToken,
+      } as ListObjectsV2CommandInput);
 
-    const response = await s3Client.send(command);
-    const images: Array<{ filename: string; path: string }> = [];
+      const response: ListObjectsV2CommandOutput = await s3Client.send(command);
 
-    for (const item of response.Contents ?? []) {
-      if (item.Key && isImageFile(item.Key)) {
-        const filename = path.basename(item.Key);
-        images.push({
-          filename,
-          path: item.Key,
-        });
+      for (const item of response.Contents ?? []) {
+        if (item.Key && isImageFile(item.Key)) {
+          images.push({
+            filename: path.basename(item.Key),
+            path: item.Key,
+          });
+        }
+      }
+
+      if (response.IsTruncated) {
+        continuationToken = response.NextContinuationToken;
+      } else {
+        break;
       }
     }
 
