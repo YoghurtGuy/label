@@ -67,7 +67,7 @@ function LoginFormContent() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[url('/bg.png')] bg-cover bg-center bg-no-repeat p-4">
+    <div className="flex min-h-screen items-center justify-center bg-cover bg-center bg-no-repeat p-4">
       <Card className="w-full max-w-md">
         <LoginForm
           logo="/logo.png"
