@@ -2,6 +2,7 @@ import { authRouter } from "@/server/api/routers/auth";
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 
 import datasetRouter from "./routers/dataset";
+import { exportRouter } from "./routers/export";
 import { imageRouter } from "./routers/image";
 import { taskRouter } from "./routers/task";
 
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   dataset: datasetRouter,
   task: taskRouter,
   image: imageRouter,
+  export: exportRouter,
 });
 
 // export type definition of API

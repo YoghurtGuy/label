@@ -12,6 +12,7 @@ import { renderBadge } from "@/utils/badge";
 
 import AssignTaskForm from "../_components/AssignTaskForm";
 import DatasetForm from "../_components/DatasetForm";
+import { ExportOcrButton } from "../_components/ExportOcrButton";
 
 import { useDatasets } from "./hooks";
 
@@ -149,6 +150,7 @@ export default function DatasetsPage() {
               >
                 <Button danger>删除</Button>
               </Popconfirm>,
+              record.type === "OCR" && <ExportOcrButton key="export" datasetId={record.id} />
             ]:[],
           },
         }}
