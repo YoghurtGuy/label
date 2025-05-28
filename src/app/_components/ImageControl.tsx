@@ -2,7 +2,8 @@
 // import { useEffect } from "react";
 
 import { LeftOutlined, RightOutlined } from "@ant-design/icons";
-import { Button, InputNumber, Popconfirm } from "antd";
+import { type User } from "@prisma/client";
+import { Button, InputNumber, Popconfirm, Select } from "antd";
 export default function ImageControl({
   prevImage,
   nextImage,
@@ -14,6 +15,9 @@ export default function ImageControl({
   hasNextImage,
   imageIndex,
   imageCount,
+  ocrPreAnnotationsId,
+  setOcrPreAnnotationsId,
+  imageAnnotations,
 }: {
   prevImage: () => void;
   nextImage: () => void;
@@ -25,6 +29,9 @@ export default function ImageControl({
   hasNextImage: boolean;
   imageIndex: number;
   imageCount: number;
+  ocrPreAnnotationsId?: string | undefined;
+  setOcrPreAnnotationsId?: (ocrPreAnnotationsId: string) => void;
+  imageAnnotations?: { createdBy: User | null; createdAt: Date; id: string }[];
 }) {
   // 键盘快捷键处理
   // useEffect(() => {
@@ -67,6 +74,23 @@ export default function ImageControl({
           删除图像
         </Button>
       </Popconfirm>
+      {imageAnnotations && setOcrPreAnnotationsId && (
+        <Select
+          value={ocrPreAnnotationsId}
+          onChange={(value) => setOcrPreAnnotationsId(value)}
+          options={imageAnnotations.map((annotation) => ({
+            label: `${annotation.createdBy?.name??"预标注"}:${annotation.createdAt.toLocaleDateString(
+              "zh-CN",
+              {
+                year: "numeric",
+                month: "2-digit",
+                day: "2-digit",
+              },
+            )}`,
+            value: annotation.id,
+          }))}
+        />
+      )}
       <Button onClick={nextImage} disabled={!hasNextImage}>
         <RightOutlined />
       </Button>

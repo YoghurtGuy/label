@@ -261,6 +261,7 @@ export const imageRouter = createTRPCRouter({
       const image = await ctx.db.image.findUnique({
         where: { id: imageId },
         include: {
+          dataset: true,
           taskOnImage: {
             include: {
               task: true,
@@ -274,6 +275,7 @@ export const imageRouter = createTRPCRouter({
                   order: "asc",
                 },
               },
+              createdBy: true,
             },
             orderBy: {
               createdAt: "asc",
@@ -291,7 +293,7 @@ export const imageRouter = createTRPCRouter({
 
       // 检查用户是否有权限访问此图像
       if (
-        !image.taskOnImage.some(
+        image.dataset.createdById!==ctx.session.user.id&&!image.taskOnImage.some(
           (taskOnImage) =>
             taskOnImage.task.assignedToId === ctx.session.user.id,
         )
@@ -347,6 +349,8 @@ export const imageRouter = createTRPCRouter({
           color: labelColor,
           data,
           ocrText: annotation.text ?? undefined,
+          createdBy: annotation.createdBy,
+          createdAt: annotation.createdAt,
         };
       });
 

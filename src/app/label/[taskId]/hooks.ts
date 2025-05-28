@@ -22,6 +22,7 @@ export const useImageAnnotation = (taskId: string) => {
   const [isSaving, setIsSaving] = useState(false);
   const [currentLabelInfo, setCurrentLabelInfo] = useState<Label | null>(null);
   const [ocrOriginalText, setOcrOriginalText] = useState("获取中...");
+  const [ocrPreAnnotationsId, setOcrPreAnnotationsId] = useState<string | undefined>(undefined);
   // const imageAnnotationLogger = logger.child({ name: "IMAGE_ANNOTATION", taskId, currentImageId });
   // 获取 App 组件的 message 方法
   const { message: appMessage } = App.useApp();
@@ -91,6 +92,11 @@ export const useImageAnnotation = (taskId: string) => {
   // 获取 utils 对象用于使查询失效
   const utils = api.useUtils();
 
+  const setOCRText = (text: string | undefined) => {
+    setOcrOriginalText(text ?? "无标注");
+    vd?.setValue(text ?? "无标注", true);
+  };
+
   // 当获取到图像标注时，更新标注状态
   useEffect(() => {
     // 只在 imageAnnotations 真正发生变化时才更新
@@ -103,19 +109,9 @@ export const useImageAnnotation = (taskId: string) => {
     ) {
       setAnnotations(hasAnnotations ? imageAnnotations : []);
     }
-
-    if (imageAnnotations[imageAnnotations.length - 1]?.ocrText) {
-      setOcrOriginalText(
-        imageAnnotations[imageAnnotations.length - 1]?.ocrText ?? "无标注",
-      );
-      vd?.setValue(
-        imageAnnotations[imageAnnotations.length - 1]?.ocrText ?? "无标注",true
-      );
-    } else {
-      setOcrOriginalText("无标注");
-      vd?.setValue("无标注");
-    }
-  }, [imageAnnotations]);
+    setOcrPreAnnotationsId(ocrPreAnnotationsId??imageAnnotations[imageAnnotations.length - 1]?.id);
+    setOCRText(imageAnnotations.find((annotation) => annotation.id === ocrPreAnnotationsId)?.ocrText);
+  }, [imageAnnotations, ocrPreAnnotationsId]);
 
   // 保存标注的mutation
   const saveAnnotationsMutation = api.image.saveAnnotations.useMutation({
@@ -132,13 +128,6 @@ export const useImageAnnotation = (taskId: string) => {
       setIsSaving(false);
     },
   });
-
-  // 初始化当前图像
-  // useEffect(() => {
-  //   if (imageList?.[0]) {
-  //     setCurrentImageId(imageList[0].id);
-  //   }
-  // }, [imageList]);
 
   // 处理标注变化
   const handleAnnotationChange = (newAnnotations: Annotation[]) => {
@@ -323,6 +312,7 @@ export const useImageAnnotation = (taskId: string) => {
       setCurrentImageIndex(imageIndex);
       setSelectedAnnotation(null);
       setAnnotations([]); // 清空当前标注
+      setOcrPreAnnotationsId(undefined);
     } else {
       appMessage.error("图像不存在");
     }
@@ -349,6 +339,9 @@ export const useImageAnnotation = (taskId: string) => {
     isSaving,
     vd,
     ocrOriginalText,
+    ocrPreAnnotationsId,
+    imageAnnotations,
+    setOcrPreAnnotationsId,
     hasPrevImage: currentImageIndex > 0,
     hasNextImage: currentImageIndex < imageList.length - 1,
     handleAnnotationChange,

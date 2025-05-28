@@ -14,6 +14,9 @@ export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
     vd,
     setVd,
     ocrOriginalText,
+    ocrPreAnnotationsId,
+    setOcrPreAnnotationsId,
+    imageAnnotations,
     hasPrevImage,
     hasNextImage,
     currentImageIndex,
@@ -41,6 +44,9 @@ export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
           imageCount={imageCount}
           handleImageChange={handleImageChange}
           deleteImage={() => handleDeleteImage(currentImage?.id)}
+          ocrPreAnnotationsId={ocrPreAnnotationsId}
+          setOcrPreAnnotationsId={setOcrPreAnnotationsId}
+          imageAnnotations={imageAnnotations}
         />
         <Vditor
           initialValue={ocrOriginalText}
