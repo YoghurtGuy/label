@@ -211,7 +211,7 @@ export const imageRouter = createTRPCRouter({
         await tx.annotation.deleteMany({
           where: {
             imageId,
-            createdById:ctx.session.user.id
+            createdById: ctx.session.user.id,
           },
         });
 
@@ -293,7 +293,8 @@ export const imageRouter = createTRPCRouter({
 
       // 检查用户是否有权限访问此图像
       if (
-        image.dataset.createdById!==ctx.session.user.id&&!image.taskOnImage.some(
+        image.dataset.createdById !== ctx.session.user.id &&
+        !image.taskOnImage.some(
           (taskOnImage) =>
             taskOnImage.task.assignedToId === ctx.session.user.id,
         )
@@ -354,7 +355,15 @@ export const imageRouter = createTRPCRouter({
         };
       });
 
-      return formattedAnnotations.sort((a, b) => a.createdBy?.id===ctx.session.user.id?1:-1);
+      return formattedAnnotations.sort((a, b) =>
+        a.createdBy?.id === ctx.session.user.id &&
+        b.createdBy?.id !== ctx.session.user.id
+          ? 1
+          : a.createdBy?.id !== ctx.session.user.id &&
+              b.createdBy?.id === ctx.session.user.id
+            ? -1
+            : 0,
+      );
     }),
 
   getImages: protectedProcedure
