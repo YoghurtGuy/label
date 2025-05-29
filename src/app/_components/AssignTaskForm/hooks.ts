@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { App } from "antd";
+import { useSession } from "next-auth/react";
 
 import { api } from "@/trpc/react";
 import { type CreateTaskInput } from "@/types/task";
@@ -17,10 +18,11 @@ export const useAssignTaskForm = (props: AssignTaskFormProps) => {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const { message } = App.useApp();
   const utils = api.useUtils();
+  const session = useSession();
 
   // 获取所有用户
   const { data: users, isLoading: isLoadingUsers } = api.auth.getAllUsers.useQuery(undefined, {
-    enabled: true,
+    enabled: session.status === "authenticated",
   });
 
   // 获取数据集信息

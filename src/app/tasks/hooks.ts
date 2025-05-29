@@ -19,12 +19,14 @@ export const useTasks = () => {
   const router = useRouter();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const { data: taskCount } = api.task.getCount.useQuery();
+  const { data: taskCount } = api.task.getCount.useQuery(undefined, {
+    enabled: session.status === "authenticated",
+  });
   const { data: tasksData, isLoading } = api.task.getAll.useQuery({
     pageSize: pageSize,
     page: page,
     type: activeKey,
-  });
+  }, { enabled: session.status === "authenticated" });
 
   const deleteTask = api.task.delete.useMutation({
     onSuccess: async () => {

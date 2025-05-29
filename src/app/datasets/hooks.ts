@@ -14,19 +14,28 @@ export const useDatasets = () => {
   const [activeKey, setActiveKey] = useState<"mine" | "all">("all");
   const [formVisible, setFormVisible] = useState(false);
   const [assignFormVisible, setAssignFormVisible] = useState(false);
-  const [editingDatasetId, setEditingDatasetId] = useState<string | undefined>();
-  const [assigningDatasetId, setAssigningDatasetId] = useState<string | undefined>();
+  const [editingDatasetId, setEditingDatasetId] = useState<
+    string | undefined
+  >();
+  const [assigningDatasetId, setAssigningDatasetId] = useState<
+    string | undefined
+  >();
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const utils = api.useUtils();
   const { message } = App.useApp();
   const session = useSession();
 
-  const { data: datasetsData, isLoading } = api.dataset.getAll.useQuery({
-    pageSize: pageSize,
-    page: page,
+  const { data: datasetsData, isLoading } = api.dataset.getAll.useQuery(
+    {
+      pageSize: pageSize,
+      page: page,
+    },
+    { enabled: session.status === "authenticated" },
+  );
+  const { data: datasetCount } = api.dataset.getCount.useQuery(undefined, {
+    enabled: session.status === "authenticated",
   });
-  const { data: datasetCount } = api.dataset.getCount.useQuery();
 
   const deleteDataset = api.dataset.delete.useMutation({
     onSuccess: async () => {
@@ -100,4 +109,4 @@ export const useDatasets = () => {
     handleMenuChange,
     handlePageChange,
   };
-}; 
+};
