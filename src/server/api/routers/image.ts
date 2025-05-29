@@ -354,7 +354,7 @@ export const imageRouter = createTRPCRouter({
         };
       });
 
-      return formattedAnnotations;
+      return formattedAnnotations.sort((a, b) => a.createdBy?.id===ctx.session.user.id?1:-1);
     }),
 
   getImages: protectedProcedure

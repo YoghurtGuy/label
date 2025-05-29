@@ -467,10 +467,7 @@ const datasetRouter = createTRPCRouter({
 
             if (matchedImage) {
               annotationsToCreate.push({
-                type:
-                  dataset.type === "OCR"
-                    ? "OCR"
-                    : ("RECTANGLE" as AnnotationType),
+                type: "OCR" as AnnotationType,
                 text: annotation.text,
                 status: "PENDING" as AnnotationStatus,
                 imageId: matchedImage.id,
