@@ -104,6 +104,7 @@ export const taskRouter = createTRPCRouter({
 
         return {
           ...task,
+          taskOnImage: undefined,
           stats: {
             imageCount,
             annotatedImageCount,
@@ -148,15 +149,15 @@ export const taskRouter = createTRPCRouter({
               labels: true,
             },
           },
-          taskOnImage: {
-            include: {
-              image: {
-                include: {
-                  annotations: true,
-                },
-              },
-            },
-          },
+          // taskOnImage: {
+          //   include: {
+          //     image: {
+          //       include: {
+          //         annotations: true,
+          //       },
+          //     },
+          //   },
+          // },
         },
       });
 
@@ -168,23 +169,24 @@ export const taskRouter = createTRPCRouter({
       }
 
       // 添加统计信息
-      const imageCount = task.taskOnImage.length;
-      const annotatedImageCount = task.taskOnImage.filter(
-        (toi) => toi.image.annotations.length > 0,
-      ).length;
-      const annotationCount = task.taskOnImage.reduce(
-        (total, toi) => total + toi.image.annotations.length,
-        0,
-      );
+      // const imageCount = task.taskOnImage.length;
+      // const annotatedImageCount = task.taskOnImage.filter(
+      //   (toi) => toi.image.annotations.length > 0,
+      // ).length;
+      // const annotationCount = task.taskOnImage.reduce(
+      //   (total, toi) => total + toi.image.annotations.length,
+      //   0,
+      // );
 
-      return {
-        ...task,
-        stats: {
-          imageCount,
-          annotatedImageCount,
-          annotationCount,
-        },
-      };
+      // return {
+      //   ...task,
+      //   stats: {
+      //     imageCount,
+      //     annotatedImageCount,
+      //     annotationCount,
+      //   },
+      // };
+      return task;
     }),
 
   // 创建任务
