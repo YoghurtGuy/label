@@ -143,6 +143,7 @@ model Annotation {
     // task        AnnotationTask? @relation(fields: [taskId], references: [id])
     // taskId      String?
     points      Point[] // 用于矩形和多边形标注的点位
+    note        String? // 标注备注
 
     @@index([imageId])
     @@index([createdById])

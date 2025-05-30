@@ -31,7 +31,7 @@ export default function ImageControl({
   imageCount: number;
   ocrPreAnnotationsId?: string | undefined;
   setOcrPreAnnotationsId?: (ocrPreAnnotationsId: string) => void;
-  imageAnnotations?: { createdBy: User | null; createdAt: Date; id: string }[];
+  imageAnnotations?: { createdBy: User | null; createdAt: Date; id: string,note?:string }[];
 }) {
   // 键盘快捷键处理
   // useEffect(() => {
@@ -79,15 +79,9 @@ export default function ImageControl({
           value={ocrPreAnnotationsId}
           onChange={(value) => setOcrPreAnnotationsId(value)}
           options={imageAnnotations.map((annotation) => ({
-            label: `${annotation.createdBy?.name??"预标注"}:${annotation.createdAt.toLocaleDateString(
-              "zh-CN",
-              {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-              },
-            )}`,
+            label: `${annotation.createdBy?.name??"预标"}:${annotation.note??annotation.createdAt.toLocaleDateString("zh-CN").slice(0, 10).replace(/-/g, '')}`,
             value: annotation.id,
+            title: `${annotation.note??"-"}:${annotation.createdAt.toLocaleDateString("zh-CN")}`,
           }))}
         />
       )}

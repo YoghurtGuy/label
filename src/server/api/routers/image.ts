@@ -352,17 +352,14 @@ export const imageRouter = createTRPCRouter({
           ocrText: annotation.text ?? undefined,
           createdBy: annotation.createdBy,
           createdAt: annotation.createdAt,
+          note: annotation.note ?? undefined,
         };
       });
 
-      return formattedAnnotations.sort((a, b) =>
-        a.createdBy?.id === ctx.session.user.id &&
-        b.createdBy?.id !== ctx.session.user.id
-          ? 1
-          : a.createdBy?.id !== ctx.session.user.id &&
-              b.createdBy?.id === ctx.session.user.id
-            ? -1
-            : 0,
+      return formattedAnnotations.sort(
+        (a, b) =>
+          Number(a.createdBy?.id === ctx.session.user.id) -
+          Number(b.createdBy?.id === ctx.session.user.id),
       );
     }),
 

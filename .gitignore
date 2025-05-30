@@ -49,3 +49,4 @@ yarn-error.log*
 /testimg
 /img/*
 TODO.md
+json2sql.js
