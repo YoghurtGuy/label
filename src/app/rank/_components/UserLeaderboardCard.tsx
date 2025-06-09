@@ -46,11 +46,18 @@ export const UserLeaderboardCard: FC<UserLeaderboardCardProps> = ({ user, rank }
       </div>
       <div className="grid grid-cols-7 gap-2">
         {user.dailyStats.map((stat, index) => (
-          <div
-            key={index}
-            className={`${getColorByCount(stat.count,stat.isWeekend)} rounded p-2 text-center`}
-          >
-            <span className="text-white font-medium text-lg">{stat.count}</span>
+          <div key={index} className="flex flex-col">
+            <div
+              className={`${getColorByCount(stat.count,stat.isWeekend)} rounded p-2 text-center`}
+            >
+              <span className="text-white font-medium text-lg">{stat.count}</span>
+            </div>
+            {index === 6 && (
+              <span className="text-xs text-gray-500 mt-1 text-center">今天</span>
+            )}
+            {index === 0 && (
+              <span className="text-xs text-gray-500 mt-1 text-center">{stat.date?.split('-').slice(1,3).join('-')}</span>
+            )}
           </div>
         ))}
       </div>
