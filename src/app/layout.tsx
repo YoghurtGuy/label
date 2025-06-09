@@ -8,7 +8,7 @@ import { SessionProvider } from "next-auth/react";
 
 import { TRPCReactProvider } from "@/trpc/react";
 
-import Navbar from "./_components/Navbar";
+import NavbarWrapper from "./_components/NavbarWrapper";
 import { antdConfig } from "./antdConifg";
 
 export const metadata: Metadata = {
@@ -34,7 +34,7 @@ export default function RootLayout({
               <ConfigProvider theme={antdConfig.theme}>
                 <App>
                   <div className="min-h-screen flex flex-col">
-                    <Navbar />
+                    <NavbarWrapper />
                     <main className="flex-1">
                       {children}
                     </main>
