@@ -22,7 +22,9 @@ export const useImageAnnotation = (taskId: string) => {
   const [isSaving, setIsSaving] = useState(false);
   const [currentLabelInfo, setCurrentLabelInfo] = useState<Label | null>(null);
   const [ocrOriginalText, setOcrOriginalText] = useState("获取中...");
-  const [ocrPreAnnotationsId, setOcrPreAnnotationsId] = useState<string | undefined>(undefined);
+  const [ocrPreAnnotationsId, setOcrPreAnnotationsId] = useState<
+    string | undefined
+  >(undefined);
   // const imageAnnotationLogger = logger.child({ name: "IMAGE_ANNOTATION", taskId, currentImageId });
   // 获取 App 组件的 message 方法
   const { message: appMessage } = App.useApp();
@@ -109,9 +111,16 @@ export const useImageAnnotation = (taskId: string) => {
     ) {
       setAnnotations(hasAnnotations ? imageAnnotations : []);
     }
-    setOcrPreAnnotationsId(ocrPreAnnotationsId??imageAnnotations[imageAnnotations.length - 1]?.id);
-    setOCRText(imageAnnotations.find((annotation) => annotation.id === ocrPreAnnotationsId)?.ocrText);
-  }, [imageAnnotations, ocrPreAnnotationsId]);
+    setOcrPreAnnotationsId(imageAnnotations[imageAnnotations.length - 1]?.id);
+  }, [imageAnnotations]);
+  
+  useEffect(() => {
+    setOCRText(
+      imageAnnotations.find(
+        (annotation) => annotation.id === ocrPreAnnotationsId,
+      )?.ocrText,
+    );
+  }, [ocrPreAnnotationsId]);
 
   // 保存标注的mutation
   const saveAnnotationsMutation = api.image.saveAnnotations.useMutation({
@@ -328,7 +337,7 @@ export const useImageAnnotation = (taskId: string) => {
     imageList,
     // currentImageId: imageList[currentImageIndex]?.id,
     currentImageIndex,
-    currentImage:imageList[currentImageIndex],
+    currentImage: imageList[currentImageIndex],
     imageCount: imageList.length,
     // setCurrentImageId,
     annotations,
