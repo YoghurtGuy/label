@@ -7,6 +7,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
+import { distributeImagesToUsers } from "@/utils/array";
 
 export const taskRouter = createTRPCRouter({
   // 获取任务数量
@@ -196,16 +197,18 @@ export const taskRouter = createTRPCRouter({
         name: z.string().min(1),
         description: z.string(),
         datasetId: z.string(),
-        assignedTo: z.array(
-          z.object({
-            userId: z.string(),
-            indexRange: z.array(z.number()).min(2).max(2),
-          }),
-        ),
+        assignedTo: z.array(z.string()),
+        indexRange: z.array(z.number()).min(2).max(2),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { name, description, datasetId, assignedTo } = input;
+      const {
+        name,
+        description,
+        datasetId,
+        assignedTo,
+        indexRange,
+      } = input;
 
       // 检查数据集是否存在
       const dataset = await ctx.db.dataset.findFirst({
@@ -234,49 +237,51 @@ export const taskRouter = createTRPCRouter({
         });
       }
 
-      await ctx.db.$transaction(async (tx) => {
-        for (const assign of assignedTo) {
-          // 检查索引范围是否有效
-          const startIndex = assign.indexRange[0];
-          const endIndex = assign.indexRange[1];
-          if (
-            startIndex === undefined ||
-            endIndex === undefined ||
-            startIndex < 0 ||
-            endIndex >= dataset.images.length ||
-            startIndex > endIndex
-          ) {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: "图像索引范围无效",
-            });
-          }
-          // 获取指定范围的图像
-          const images = dataset.images.filter(
-            (image) =>
-              image.order >= startIndex &&
-              image.order <= endIndex &&
-              image.deleteById === null,
-          );
-          // 创建任务
-          await tx.annotationTask.create({
+      // 检查索引范围是否有效
+      const startIndex = indexRange[0];
+      const endIndex = indexRange[1];
+      if (
+        startIndex === undefined ||
+        endIndex === undefined ||
+        startIndex < 0 ||
+        endIndex >= dataset.images.length ||
+        startIndex > endIndex
+      ) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "图像索引范围无效",
+        });
+      }
+      // 获取指定范围的图像
+      const images = dataset.images.filter(
+        (image) =>
+          image.order >= startIndex &&
+          image.order <= endIndex &&
+          image.deleteById === null,
+      );
+      // 平均随机分配图像
+      const assignedImages = distributeImagesToUsers(
+        images.map((image) => image.id),
+        assignedTo,
+      );
+      const createTaskPromises = Object.entries(assignedImages).map(
+        ([userId, imageUrls]) =>
+          ctx.db.annotationTask.create({
             data: {
               name,
               description,
               creatorId: ctx.session.user.id,
-              assignedToId: assign.userId,
+              assignedToId: userId,
               datasetId,
               taskOnImage: {
-                create: images.map((image) => ({
-                  imageId: image.id,
+                create: imageUrls.map((imageId) => ({
+                  imageId,
                 })),
               },
             },
-          });
-        }
-      });
-
-      return true;
+          })
+      );
+      return await Promise.all(createTaskPromises);;
     }),
 
   // 更新任务

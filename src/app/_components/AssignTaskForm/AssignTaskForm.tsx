@@ -5,8 +5,6 @@ import {
   ProFormSelect,
   ProFormDigitRange,
   ProFormText,
-  ProFormList,
-  ProFormGroup,
 } from "@ant-design/pro-components";
 import { Modal, Row, Col, Card } from "antd";
 
@@ -48,53 +46,63 @@ const AssignTaskForm: React.FC<AssignTaskFormProps> = (props) => {
       >
         <Row gutter={16}>
           <Col span={16}>
-            <ProFormText name="name" label="任务名称" rules={[{ required: true, message: "请输入任务名称" }]} />
-            <ProFormText name="description" label="任务描述" rules={[{ required: true, message: "请输入任务描述" }]} />
+            <ProFormText
+              name="name"
+              label="任务名称"
+              rules={[{ required: true, message: "请输入任务名称" }]}
+            />
+            <ProFormText
+              name="description"
+              label="任务描述"
+              rules={[{ required: true, message: "请输入任务描述" }]}
+            />
           </Col>
           <Col span={8}>
             <div>
-            <Card size="small">
-              <div className="text-sm font-bold">
-                未分配序号
-              </div>
-              <div>
-                {transIndex(dataset?.index.unassigned ?? [])}
-              </div>
-            </Card>
+              <Card size="small">
+                <div className="text-sm font-bold">未分配序号</div>
+                <div>{transIndex(dataset?.index.unassigned ?? [])}</div>
+              </Card>
             </div>
             <div className="mt-2">
-            <Card size="small">
-              <div className="text-sm font-bold">
-                未标注序号
-              </div>
-              <div>
-                {transIndex(dataset?.index.unannotated ?? [])}
-              </div>
-            </Card>
+              <Card size="small">
+                <div className="text-sm font-bold">未标注序号</div>
+                <div>{transIndex(dataset?.index.unannotated ?? [])}</div>
+              </Card>
             </div>
           </Col>
         </Row>
-
-        <ProFormList name="assignedTo" label="标注人员">
-          <ProFormGroup key="group" layout="vertical">
-            <ProFormSelect
-              name="userId"
-              label="选择标注人员"
-              options={users?.map((user) => ({
-                label: user.name,
-                value: user.id,
-              }))}
-              rules={[{ required: true, message: "请选择标注人员" }]}
-            />
-            <ProFormDigitRange
-              name="indexRange"
-              label="图像序号"
-              min={1}
-              max={dataset?.imageCount ?? 0}
-              rules={[{ required: true, message: "请输入图像序号" }]}
-            />
-          </ProFormGroup>
-        </ProFormList>
+        <ProFormDigitRange
+          name="indexRange"
+          label="图像序号"
+          min={0}
+          max={dataset?.imageCount ?? 0}
+          rules={[
+            {
+              required: true,
+              message: "请选择图像序号！",
+            },
+          ]}
+        />
+        <ProFormSelect
+          name="assignedTo"
+          label="分配人员"
+          options={users?.map((user) => ({
+            label: user.name,
+            value: user.id,
+          }))}
+          fieldProps={{
+            mode: "multiple",
+          }}
+          placeholder="请选择标注人员"
+          rules={[
+            {
+              required: true,
+              message: "请选择标注人员！",
+              type: "array",
+            },
+          ]}
+        />
       </ProForm>
     </Modal>
   );

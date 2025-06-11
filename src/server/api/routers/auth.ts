@@ -68,7 +68,7 @@ export const authRouter = createTRPCRouter({
           adminPermission: true,
         },
         orderBy: {
-          name: 'asc',
+          id: 'asc',
         },
       });
       
