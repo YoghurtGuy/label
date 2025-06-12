@@ -14,7 +14,7 @@ import { antdConfig } from "./antdConifg";
 export const metadata: Metadata = {
   title: "图像标注系统",
   description: "用于标注深度学习目标检测和 OCR 识别的数据集",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [{ rel: "icon", url: "/logo.png" }],
 };
 
 const geist = Geist({
