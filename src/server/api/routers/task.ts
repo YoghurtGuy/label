@@ -1,13 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import { env } from "@/env";
 import {
   createTRPCRouter,
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
 import { distributeImagesToUsers } from "@/utils/array";
+import { getImageSrc } from "@/utils/image";
 
 export const taskRouter = createTRPCRouter({
   // 获取任务数量
@@ -202,13 +202,7 @@ export const taskRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const {
-        name,
-        description,
-        datasetId,
-        assignedTo,
-        indexRange,
-      } = input;
+      const { name, description, datasetId, assignedTo, indexRange } = input;
 
       // 检查数据集是否存在
       const dataset = await ctx.db.dataset.findFirst({
@@ -279,9 +273,9 @@ export const taskRouter = createTRPCRouter({
                 })),
               },
             },
-          })
+          }),
       );
-      return await Promise.all(createTaskPromises);;
+      return await Promise.all(createTaskPromises);
     }),
 
   // 更新任务
@@ -462,14 +456,7 @@ export const taskRouter = createTRPCRouter({
         return {
           ...image,
           annotationCount,
-          src:
-            image.storage === "WEB" && env.ALIST_URL
-              ? `${env.ALIST_URL}/d${env.ALIST_IMAGES_DIR ?? ""}${image.path}`
-              : image.storage === "S3"
-                ? `${env.AWS_URL ?? env.AWS_ENDPOINT}/${env.AWS_IMAGES_DIR ? env.AWS_IMAGES_DIR + "/" : ""}${image.path}`
-                : image.storage === "SERVER"
-                  ? `/img/${image.id}`
-                  : undefined,
+          src: getImageSrc(image),
         };
       });
 

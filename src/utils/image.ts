@@ -1,11 +1,12 @@
-import 'server-only';
+import "server-only";
 // import { type PathLike } from 'fs';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { promises as fs } from "fs";
+import path from "path";
 
-import sharp from 'sharp';
+import { type Image } from "@prisma/client";
+import sharp from "sharp";
 
-import { env } from '@/env';
+import { env } from "@/env";
 // import logger from './logger';
 
 // const imageLogger = logger.child({ name: "IMAGE" });
@@ -38,13 +39,15 @@ export async function getImageDimensions(imagePath: string) {
  * @param imagePath 图像文件路径
  * @returns Promise<ImageMetadata>
  */
-export async function getImageMetadata(imagePath: string): Promise<ImageMetadata> {
+export async function getImageMetadata(
+  imagePath: string,
+): Promise<ImageMetadata> {
   try {
     const stats = await fs.stat(imagePath);
     const metadata = await sharp(imagePath).metadata();
-    
+
     if (!metadata.width || !metadata.height || !metadata.format) {
-      throw new Error('无法获取图像元数据');
+      throw new Error("无法获取图像元数据");
     }
 
     return {
@@ -57,7 +60,7 @@ export async function getImageMetadata(imagePath: string): Promise<ImageMetadata
     if (error instanceof Error) {
       throw new Error(`获取图像元数据失败: ${error.message}`);
     }
-    throw new Error('获取图像元数据时出现未知错误');
+    throw new Error("获取图像元数据时出现未知错误");
   }
 }
 
@@ -67,7 +70,7 @@ export async function getImageMetadata(imagePath: string): Promise<ImageMetadata
  * @returns boolean
  */
 export function isImageFile(filename: string): boolean {
-  const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp'];
+  const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"];
   const ext = path.extname(filename).toLowerCase();
   return imageExtensions.includes(ext);
 }
@@ -77,14 +80,19 @@ export function isImageFile(filename: string): boolean {
  * @param dirPath 目录路径
  * @returns Promise<Array<{filename: string, path: string}>>
  */
-export async function getImagesFromDirectory(dirPath: string): Promise<Array<{filename: string, path: string}>> {
+export async function getImagesFromDirectory(
+  dirPath: string,
+): Promise<Array<{ filename: string; path: string }>> {
   if (env.IS_ON_VERCEL) {
     throw new Error(`项目部署在 Vercel, 禁止访问服务器文件系统`);
   }
-  const images: Array<{filename: string, path: string}> = [];
-  const fullDirPath=path.join(env.SERVER_IMAGES_DIR, dirPath)
+  const images: Array<{ filename: string; path: string }> = [];
+  const fullDirPath = path.join(env.SERVER_IMAGES_DIR, dirPath);
   try {
-    const exists = await fs.access(fullDirPath).then(() => true).catch(() => false);
+    const exists = await fs
+      .access(fullDirPath)
+      .then(() => true)
+      .catch(() => false);
     if (!exists) {
       throw new Error(`目录不存在: ${fullDirPath}`);
     }
@@ -92,18 +100,18 @@ export async function getImagesFromDirectory(dirPath: string): Promise<Array<{fi
     async function processDirectory(currentPath: string): Promise<void> {
       try {
         const items = await fs.readdir(currentPath);
-        
+
         for (const item of items) {
           try {
             const fullPath = path.join(currentPath, item);
             const stat = await fs.stat(fullPath);
-            
+
             if (stat.isDirectory()) {
               await processDirectory(fullPath);
             } else if (stat.isFile() && isImageFile(item)) {
               images.push({
                 filename: item,
-                path: path.relative(env.SERVER_IMAGES_DIR, fullPath)
+                path: path.relative(env.SERVER_IMAGES_DIR, fullPath),
               });
             }
           } catch (itemError) {
@@ -128,8 +136,8 @@ export async function getImagesFromDirectory(dirPath: string): Promise<Array<{fi
       throw new Error(`处理目录时出错: ${error.message}`);
     }
     // imageLogger.error('处理目录时出现未知错误');
-    console.error('处理目录时出现未知错误');
-    throw new Error('处理目录时出现未知错误');
+    console.error("处理目录时出现未知错误");
+    throw new Error("处理目录时出现未知错误");
   }
 }
 
@@ -138,9 +146,11 @@ export async function getImagesFromDirectory(dirPath: string): Promise<Array<{fi
  * @param images 图像文件列表
  * @returns Promise<Array<{filename: string, path: string, width: number, height: number}>>
  */
-export async function processImages(images: Array<{filename: string, path: string}>) {
+export async function processImages(
+  images: Array<{ filename: string; path: string }>,
+) {
   const results = [];
-  
+
   for (const image of images) {
     try {
       const dimensions = await getImageDimensions(image.path);
@@ -155,7 +165,7 @@ export async function processImages(images: Array<{filename: string, path: strin
       continue;
     }
   }
-  
+
   return results;
 }
 
@@ -165,27 +175,27 @@ export async function processImages(images: Array<{filename: string, path: strin
  * @returns MIME类型
  */
 export const getMimeTypeFromPath = (path: string): string => {
-  const extension = path.split('.').pop()?.toLowerCase();
-  
+  const extension = path.split(".").pop()?.toLowerCase();
+
   switch (extension) {
-    case 'jpg':
-    case 'jpeg':
-      return 'image/jpeg';
-    case 'png':
-      return 'image/png';
-    case 'gif':
-      return 'image/gif';
-    case 'webp':
-      return 'image/webp';
-    case 'svg':
-      return 'image/svg+xml';
-    case 'bmp':
-      return 'image/bmp';
-    case 'tiff':
-    case 'tif':
-      return 'image/tiff';
+    case "jpg":
+    case "jpeg":
+      return "image/jpeg";
+    case "png":
+      return "image/png";
+    case "gif":
+      return "image/gif";
+    case "webp":
+      return "image/webp";
+    case "svg":
+      return "image/svg+xml";
+    case "bmp":
+      return "image/bmp";
+    case "tiff":
+    case "tif":
+      return "image/tiff";
     default:
-      return 'image/jpeg'; // 默认类型
+      return "image/jpeg"; // 默认类型
   }
 };
 
@@ -195,8 +205,46 @@ export const getMimeTypeFromPath = (path: string): string => {
  * @param mimeType 输出路径
  * @returns Promise<string>
  */
-export async function convertBase64ToUrl(base64: string, mimeType: string): Promise<string> {
+export async function convertBase64ToUrl(
+  base64: string,
+  mimeType: string,
+): Promise<string> {
   const imageBuffer = await fs.readFile(base64);
   const imageBlob = new Blob([imageBuffer], { type: mimeType });
   return URL.createObjectURL(imageBlob);
 }
+const joinUrl = (...parts: string[]): string =>
+  parts
+    .filter(Boolean)
+    .map(
+      (part, index) =>
+        index === 0
+          ? part.replace(/\/+$/, "") // 去掉首段末尾 /
+          : part.replace(/^\/+|\/+$/g, ""), // 中间部分去两端 /
+    )
+    .join("/");
+
+export const getImageSrc = (image: Image): string | undefined => {
+  switch (image.storage) {
+    case "WEB":
+      if (env.ALIST_URL) {
+        return joinUrl(
+          env.ALIST_URL,
+          "d",
+          env.ALIST_IMAGES_DIR,
+          image.path,
+        );
+      }
+    // fallback to S3 logic
+    case "S3":
+      const base = env.AWS_URL ?? env.AWS_ENDPOINT;
+      if (!base) return undefined;
+      return joinUrl(base, env.AWS_IMAGES_DIR ?? "", image.path);
+
+    case "SERVER":
+      return `/img/${image.id}`;
+
+    default:
+      return undefined;
+  }
+};
