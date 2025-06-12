@@ -48,5 +48,6 @@ yarn-error.log*
 # test
 /testimg
 /img/*
+/script/*
 TODO.md
 json2sql.js

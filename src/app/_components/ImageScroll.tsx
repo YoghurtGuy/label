@@ -57,6 +57,7 @@ export default function ImageScrollPage({
         >
           {src && (
             <Image
+              unoptimized
               src={src}
               alt="待标注图像"
               height={10000}
