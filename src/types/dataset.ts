@@ -47,7 +47,7 @@ export interface CreateDatasetInput {
   type: DatasetType;
   labels: Omit<Label, "id">[];
   importMethod: ImportMethod;
-  serverPath?: string;
+  serverPath: string[];
   prompts?: string;
   preAnnotation?: File;
 }

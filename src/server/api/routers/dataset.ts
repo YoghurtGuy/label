@@ -175,7 +175,7 @@ const datasetRouter = createTRPCRouter({
         ),
         prompts: z.string().optional().nullable(),
         importMethod: z.enum(["BROWSER_UPLOAD", "SERVER_FOLDER"]),
-        serverPath: z.string().optional(),
+        serverPath: z.array(z.string()),
       }),
     )
     .mutation(async ({ ctx, input }) => {
@@ -200,94 +200,35 @@ const datasetRouter = createTRPCRouter({
       });
 
       // 处理图像导入
-      if (importMethod === "SERVER_FOLDER" && serverPath) {
+      if (importMethod === "SERVER_FOLDER" && serverPath.length > 0) {
         try {
-          // 获取目录中的所有图像文件
-          const imageFiles = serverPath.startsWith("web:")
-            ? await getAlistImages(serverPath.slice(4))
-            : serverPath.startsWith("s3:")
-              ? await getS3Images(serverPath.slice(3))
-              : env.IS_ON_VERCEL
-                ? []
-                : await getImagesFromDirectory(serverPath);
+          for (const p of serverPath) {
+            // 获取目录中的所有图像文件
+            const imageFiles = p.startsWith("web:")
+              ? await getAlistImages(p.slice(4))
+              : p.startsWith("s3:")
+                ? await getS3Images(p.slice(3))
+                : env.IS_ON_VERCEL
+                  ? []
+                  : await getImagesFromDirectory(p);
 
-          // const totalFiles = imageFiles.length;
-          // let processedCount = 0;
-          // const failedFiles: string[] = [];
-          await ctx.db.image.createMany({
-            data: imageFiles.map((image, index) => ({
-              ...image,
-              order: index,
-              datasetId: dataset.id,
-              storage: serverPath.startsWith("web:")
-                ? "WEB"
-                : serverPath.startsWith("s3:")
-                  ? "S3"
-                  : "SERVER",
-            })),
-          });
-
-          //   // 发送开始处理的进度信息
-          //   progressEmitter.emit("progress", {
-          //     datasetId: dataset.id,
-          //     total: totalFiles,
-          //     processed: processedCount,
-          //     currentFile: "",
-          //     status: "processing",
-          //   } as ImportProgress);
-
-          //   // 逐个处理图像文件
-          //   for (const imageFile of imageFiles) {
-          //     try {
-          //       const metadata = await getImageMetadata(imageFile.path);
-
-          //       // 创建图像记录
-          //       await ctx.db.image.create({
-          //         data: {
-          //           filename: imageFile.filename,
-          //           path: path.relative(env.SERVER_IMAGES_DIR ?? '', imageFile.path),
-          //           width: metadata.width,
-          //           height: metadata.height,
-          //           datasetId: dataset.id,
-          //         },
-          //       });
-
-          //       processedCount++;
-          //       // 发出进度更新事件
-          //       progressEmitter.emit("progress", {
-          //         datasetId: dataset.id,
-          //         total: totalFiles,
-          //         processed: processedCount,
-          //         currentFile: imageFile.filename,
-          //         status: "processing",
-          //       } as ImportProgress);
-          //     } catch (error) {
-          //       // datasetLogger.error(`处理图像失败: ${imageFile.path}`, error);
-          //       console.error(`处理图像失败: ${imageFile.path}`, error);
-          //       failedFiles.push(imageFile.filename);
-          //       continue;
-          //     }
-          //   }
-
-          //   // 发送完成处理的进度信息
-          //   progressEmitter.emit("progress", {
-          //     datasetId: dataset.id,
-          //     total: totalFiles,
-          //     processed: processedCount,
-          //     currentFile: "",
-          //     status: "completed",
-          //   } as ImportProgress);
+            // const totalFiles = imageFiles.length;
+            // let processedCount = 0;
+            // const failedFiles: string[] = [];
+            await ctx.db.image.createMany({
+              data: imageFiles.map((image, index) => ({
+                ...image,
+                order: index,
+                datasetId: dataset.id,
+                storage: p.startsWith("web:")
+                  ? "WEB"
+                  : p.startsWith("s3:")
+                    ? "S3"
+                    : "SERVER",
+              })),
+            });
+          }
         } catch (error) {
-          //   // 发送错误信息
-          //   progressEmitter.emit("progress", {
-          //     datasetId: dataset.id,
-          //     total: 0,
-          //     processed: 0,
-          //     currentFile: "",
-          //     status: "error",
-          //     error: error instanceof Error ? error.message : "导入图像时出错",
-          //   } as ImportProgress);
-
           // 如果导入失败，删除已创建的数据集
           await ctx.db.dataset.delete({
             where: { id: dataset.id },

@@ -209,6 +209,7 @@ const DatasetForm: React.FC<DatasetFormProps> = (props) => {
                 label="服务器文件夹路径"
                 placeholder="请选择服务器文件夹路径"
                 fieldProps={{
+                  multiple:true,
                   prefix: <FolderOutlined />,
                   loading: isLoadingDirectoryTree,
                   treeData: directoryTreeData,
