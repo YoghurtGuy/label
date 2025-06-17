@@ -5,6 +5,7 @@ export const userRouter = createTRPCRouter({
   getLeaderboard: publicProcedure.query(async ({ ctx }) => {
     const today = new Date();
     const startDate = new Date(today);
+    startDate.setHours(0, 0, 0, 0); // 设置为当天的 00:00:00.000
     startDate.setDate(today.getDate() - 6); // 前7天(包含今天)
 
     const users = await ctx.db.user.findMany({
