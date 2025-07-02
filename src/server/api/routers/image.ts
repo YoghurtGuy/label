@@ -158,6 +158,7 @@ export const imageRouter = createTRPCRouter({
                 order: z.number(),
               }),
             ),
+            score: z.number().optional(),
           }),
         ),
       }),
@@ -219,7 +220,7 @@ export const imageRouter = createTRPCRouter({
         const createdAnnotations = [];
 
         for (const annotation of annotations) {
-          const { id, type, labelId, text, points } = annotation;
+          const { id, type, labelId, text, points, score } = annotation;
 
           // 创建标注
           const createdAnnotation = await tx.annotation.create({
@@ -228,6 +229,7 @@ export const imageRouter = createTRPCRouter({
               type,
               labelId,
               text,
+              score,
               createdById: ctx.session.user.id,
               imageId,
               // taskId: image.taskId!,
@@ -353,6 +355,7 @@ export const imageRouter = createTRPCRouter({
           createdBy: annotation.createdBy,
           createdAt: annotation.createdAt,
           note: annotation.note ?? undefined,
+          score: annotation.score ?? undefined,
         };
       });
 

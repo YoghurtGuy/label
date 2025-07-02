@@ -16,4 +16,5 @@ export interface AnnotationData {
     labelId?: string;
     color: string;
     data: AnnotationData;
+    score?: number;
   }

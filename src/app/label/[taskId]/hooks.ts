@@ -26,6 +26,7 @@ export const useImageAnnotation = (taskId: string) => {
   const [ocrPreAnnotationsId, setOcrPreAnnotationsId] = useState<
     string | undefined
   >(undefined);
+  const [score, setScore] = useState<number | undefined>(undefined);
   // const imageAnnotationLogger = logger.child({ name: "IMAGE_ANNOTATION", taskId, currentImageId });
   // 获取 App 组件的 message 方法
   const { message: appMessage } = App.useApp();
@@ -120,6 +121,11 @@ export const useImageAnnotation = (taskId: string) => {
       imageAnnotations.find(
         (annotation) => annotation.id === ocrPreAnnotationsId,
       )?.ocrText,
+    );
+    setScore(
+      imageAnnotations.find(
+        (annotation) => annotation.id === ocrPreAnnotationsId,
+      )?.score,
     );
   }, [ocrPreAnnotationsId]);
 
@@ -313,6 +319,7 @@ export const useImageAnnotation = (taskId: string) => {
             type: "OCR",
             points: [],
             text: vd.getValue(),
+            score: score ?? undefined,
           },
         ],
       });
@@ -346,6 +353,8 @@ export const useImageAnnotation = (taskId: string) => {
     // currentImageId: imageList[currentImageIndex]?.id,
     currentImageIndex,
     currentImage: imageList[currentImageIndex],
+    score,
+    setScore,
     imageCount: imageList.length,
     // setCurrentImageId,
     annotations,
