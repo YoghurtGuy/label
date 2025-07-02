@@ -6,6 +6,7 @@ import type Vditor from "vditor";
 import { api } from "@/trpc/react";
 import type { Annotation } from "@/types/annotation";
 import type { Label } from "@/types/dataset";
+import { isValidJsonText } from "@/utils/array";
 // import logger from "@/utils/logger";
 /**
  * 图像标注相关的 hooks
@@ -293,6 +294,13 @@ export const useImageAnnotation = (taskId: string) => {
       vd.getValue() === "获取中..."
     )
       return;
+    if(imageList[currentImageIndex].annotations[imageList[currentImageIndex].annotations.length-1]?.score){
+      const text=vd.getValue()
+      if(!isValidJsonText(text)){
+        appMessage.error("请输入正确的JSON格式");
+        return;
+      }
+    }
 
     setIsSaving(true);
 

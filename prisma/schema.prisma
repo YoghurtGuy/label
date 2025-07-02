@@ -133,6 +133,7 @@ model Annotation {
     label       Label?           @relation(fields: [labelId], references: [id])
     labelId     String?
     text        String? // OCR文本内容
+    score       Float? // 评分
     status      AnnotationStatus @default(IGNORE)
     createdAt   DateTime         @default(now())
     updatedAt   DateTime         @updatedAt

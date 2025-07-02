@@ -27,3 +27,26 @@ export function distributeImagesToUsers(
 
   return Object.fromEntries(result);
 }
+
+function isStringArray(arr: unknown): arr is string[] {
+  return Array.isArray(arr) && arr.every(item => typeof item === "string");
+}
+
+function isResponseObjArray(arr: unknown): arr is { response: string; score: number; according: string }[] {
+  return Array.isArray(arr) && arr.every(
+    item =>
+      typeof item === "object" &&
+      item !== null &&
+      typeof (item as {response:string}).response === "string" &&
+      typeof (item as {score:number}).score === "number" &&
+      typeof (item as {according:string}).according === "string"
+  );
+}
+export function isValidJsonText(text: string): boolean {
+  try {
+    const parsed :unknown= JSON.parse(text);
+    return isStringArray(parsed) || isResponseObjArray(parsed);
+  } catch {
+    return false;
+  }
+}
