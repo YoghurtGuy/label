@@ -32,11 +32,12 @@ export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
     <div className="flex">
       <div className="w-1/2">
         {score !== undefined && (
-          <div className="flex items-center gap-2 justify-end mr-6">
+          <div className="mr-6 flex items-center justify-end gap-2">
             <span>Score:</span>
-          <InputNumber
-            min={0}
-            value={score}
+            <InputNumber
+              min={0}
+              disabled={true}
+              value={score}
               onChange={(value) => setScore(value ?? undefined)}
             />
           </div>
