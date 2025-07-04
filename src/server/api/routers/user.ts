@@ -27,6 +27,7 @@ export const userRouter = createTRPCRouter({
                 gte: mondayDate,
                 lte: sundayDate,
               },
+              score: null,
             },
             select: {
               createdAt: true,
