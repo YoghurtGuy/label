@@ -503,6 +503,11 @@ export const taskRouter = createTRPCRouter({
               select: {
                 imageId: true,
               },
+              where:{
+                task:{
+                  creatorId: "cmamm61k80008jo0a2odtvb6t"
+                }
+              }
             },
           },
         },
@@ -510,6 +515,9 @@ export const taskRouter = createTRPCRouter({
           select: {
             imageId: true,
           },
+          where:{
+            score:null
+          }
         },
       },
     });
