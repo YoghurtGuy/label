@@ -1,16 +1,19 @@
 import dayjs from 'dayjs';
+import isoWeek from 'dayjs/plugin/isoWeek';
 import { z } from "zod";
 
+dayjs.extend(isoWeek);
 import { createTRPCRouter, publicProcedure } from "../trpc";
 
 export const userRouter = createTRPCRouter({
   getLeaderboard: publicProcedure
     .input(z.string().date().optional())
     .query(async ({ ctx, input }) => {
-      let mondayDate = dayjs().day(1).toDate();
+      let mondayDate = dayjs().startOf('isoWeek').toDate();
       if (input) {
         mondayDate = new Date(input);
       }
+      console.log(mondayDate);
 
       mondayDate.setHours(0, 0, 0, 0); // 设置为当天的 00:00:00.000
       const sundayDate = new Date(mondayDate);

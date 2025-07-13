@@ -48,7 +48,7 @@ export const UserLeaderboardCard: FC<UserLeaderboardCardProps> = ({
           <span className="text-lg font-medium">{user.weeklyTotal}</span>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {user.dailyStats.map((stat, index) => (
           <div key={index} className="flex flex-col">
             <div className={`${getColorByCount(stat)} rounded p-2 text-center`}>

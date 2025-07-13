@@ -38,7 +38,7 @@ export default function LeaderboardList({ week, initialData, fetchLeaderboard }:
   const skeletonCount = data.length ?? 6;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:px-50">
       {loading
         ? Array.from({ length: skeletonCount }).map((_, i) => (
             <LeaderboardCardSkeleton key={i} />
