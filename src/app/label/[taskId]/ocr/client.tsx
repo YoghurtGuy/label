@@ -1,11 +1,13 @@
 "use client";
-import { InputNumber } from "antd";
+import { InputNumber, message } from "antd";
 
 import ImageControl from "@/app/_components/ImageControl";
 import ImageScroll from "@/app/_components/ImageScroll";
 import Vditor from "@/app/_components/vditor";
+import { api } from "@/trpc/react";
 
 import { useImageAnnotation } from "../hooks";
+
 export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
   const {
     currentImage,
@@ -27,7 +29,32 @@ export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
     imageCount,
     handleImageChange,
     handleDeleteImage,
+    // 新增：标注刷新
+    refetchAnnotations,
   } = useImageAnnotation(taskId);
+
+  // Gemini OCR 生成标注的mutation
+  const geminiOcrMutation = api.image.ocrGemini.useMutation();
+
+  const handleRefreshGemini = async () => {
+    if (!currentImage?.id) {
+      message.error("未找到当前图像");
+      return;
+    }
+    message.loading({ content: "正在请求Gemini生成标注...", key: "gemini-ocr", duration: 0 });
+    try {
+      await geminiOcrMutation.mutateAsync({ imageId: currentImage.id });
+      await refetchAnnotations();
+      message.destroy("gemini-ocr");
+      message.success({ content: "Gemini标注已刷新！", key: "gemini-ocr" });
+    } catch (error) {
+      message.error({
+        content: `Gemini标注刷新失败: ${error instanceof Error ? error.message : String(error)}`,
+        key: "gemini-ocr"
+      });
+    }
+  };
+
   return (
     <div className="flex">
       <div className="w-1/2">
@@ -59,6 +86,7 @@ export default function OcrAnnotationClient({ taskId }: { taskId: string }) {
           ocrPreAnnotationsId={ocrPreAnnotationsId}
           setOcrPreAnnotationsId={setOcrPreAnnotationsId}
           imageAnnotations={imageAnnotations}
+          onRefreshGemini={handleRefreshGemini}
         />
         <Vditor
           initialValue={ocrOriginalText}

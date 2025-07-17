@@ -248,3 +248,34 @@ export const getImageSrc = (image: Image): string | undefined => {
       return undefined;
   }
 };
+
+
+export async function urlToGenerativePart(url: string): Promise<{ inlineData: { data: string; mimeType: string } }> {
+  try {
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
+    }
+
+    // 取得圖片的 MIME 類型 (例如 'image/jpeg', 'image/png')
+    const contentType = response.headers.get("content-type");
+    if (!contentType) {
+      throw new Error("Could not determine image content type.");
+    }
+    
+    // 將圖片數據轉換為 Buffer，再轉為 Base64 字串
+    const buffer = await response.arrayBuffer();
+    const base64Data = Buffer.from(buffer).toString("base64");
+
+    return {
+      inlineData: {
+        data: base64Data,
+        mimeType: contentType,
+      },
+    };
+  } catch (error) {
+    console.error("Error converting URL to generative part:", error);
+    throw error; // 將錯誤向上拋出，以便在主處理函數中捕獲
+  }
+}

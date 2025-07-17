@@ -383,5 +383,6 @@ export const useImageAnnotation = (taskId: string) => {
     handleDeleteImage,
     // getCurrentTool,
     // getCurrentColor,
+    refetchAnnotations,
   };
 };

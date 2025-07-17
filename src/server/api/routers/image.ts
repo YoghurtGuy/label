@@ -1,5 +1,6 @@
 import path from "path";
 
+import { GoogleGenAI } from "@google/genai";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
@@ -7,7 +8,9 @@ import { env } from "@/env";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { moveFile as moveAlistFile } from "@/utils/alist";
 import { moveFile } from "@/utils/fileSystem";
+import { getImageSrc, urlToGenerativePart } from "@/utils/image";
 import { moveFile as moveS3File } from "@/utils/s3";
+
 
 export const imageRouter = createTRPCRouter({
   // 获取下一张待标注图像
@@ -359,11 +362,52 @@ export const imageRouter = createTRPCRouter({
         };
       });
 
-      return formattedAnnotations.sort(
-        (a, b) =>
-          Number(a.createdBy?.id === ctx.session.user.id) -
-          Number(b.createdBy?.id === ctx.session.user.id),
-      );
+      // return formattedAnnotations.sort(
+      //   (a, b) =>
+      //     Number(a.createdBy?.id === ctx.session.user.id) -
+      //     Number(b.createdBy?.id === ctx.session.user.id),
+      // );
+      return formattedAnnotations
+    }),
+
+  /**
+   * Gemini OCR自动识别并保存标注
+   * 输入: { imageId: string }
+   * 返回: { success: boolean, text: string }
+   */
+  ocrGemini: protectedProcedure
+    .input(z.object({ imageId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      if(!env.GEMINI_API_KEY) throw new TRPCError({ code: "NOT_FOUND", message: "Gemini API Key 未设置" });
+      const genAI = new GoogleGenAI({apiKey: env.GEMINI_API_KEY});
+      // 1. 获取图像信息
+      const image = await ctx.db.image.findUnique({ where: { id: input.imageId } });
+      if (!image) throw new TRPCError({ code: "NOT_FOUND", message: "图像不存在" });
+      // 2. 下载图片为Buffer
+      const imageUrl = getImageSrc(image);
+      if (!imageUrl) throw new TRPCError({ code: "NOT_FOUND", message: "图像不存在" });
+      const imagePart = await urlToGenerativePart(imageUrl);
+      const contents = [
+        imagePart,
+        { text: env.PROMPT ?? "识别图片中的文字" },
+      ];
+      const response = await genAI.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: contents,
+      });
+      if(!response.text) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Gemini 识别失败" });
+      // 4. 保存为OCR标注
+      await ctx.db.annotation.create({
+        data: {
+          type: "OCR",
+          text: response.text,
+          imageId: image.id,
+          createdById: null,
+          note: "Gemini New",
+          status: 'PENDING',
+        },
+      });
+      return { success: true, text: response.text ?? "" };
     }),
 
   getImages: protectedProcedure

@@ -30,7 +30,9 @@ export const env = createEnv({
     AWS_SECRET_ACCESS_KEY: z.string().optional(),
     AWS_IMAGES_TRASH_DIR: z.string().default("trash"),
     AWS_IMAGES_DIR: z.string().optional(),
-    AWS_URL:z.string().url().optional()
+    AWS_URL:z.string().url().optional(),
+    GEMINI_API_KEY: z.string().optional(),
+    PROMPT: z.string().optional(),
   },
 
   /**
@@ -65,7 +67,9 @@ export const env = createEnv({
     AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY,
     AWS_IMAGES_TRASH_DIR: process.env.AWS_IMAGES_TRASH_DIR,
     AWS_URL:process.env.AWS_URL,
-    AWS_IMAGES_DIR:process.env.AWS_IMAGES_DIR
+    AWS_IMAGES_DIR:process.env.AWS_IMAGES_DIR,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    PROMPT: process.env.PROMPT,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
