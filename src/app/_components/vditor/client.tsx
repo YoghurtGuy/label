@@ -3,6 +3,7 @@ import { useEffect } from "react";
 
 import Vditor from "vditor";
 import "vditor/dist/index.css";
+import 'katex/dist/contrib/mhchem';
 
 const App = ({
   initialValue,
@@ -42,6 +43,7 @@ const App = ({
       preview: {
         math: {
           inlineDigit: true,
+          engine: "KaTeX",
         },
       },
       cache:{
