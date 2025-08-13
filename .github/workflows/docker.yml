@@ -1,0 +1,38 @@
+name: Docker Image CI
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - release-v**
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4.1.7
+
+      - name: Extract version from tag
+        id: get_version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/release-v}" >> $GITHUB_OUTPUT
+
+      - name: Build and push docker images
+        run: |
+          # 登录阿里云容器镜像服务
+          echo ${{ secrets.ALIYUN_DOCKER_PASSWORD }} | docker login ${{ vars.REGISTRY_MIRROR }} --username ${{ secrets.ALIYUN_DOCKER_USERNAME }} --password-stdin
+
+          # 构建镜像时传入 APP_VERSION
+          docker image build --build-arg APP_VERSION=${{ steps.get_version.outputs.VERSION }} -t ${{ vars.APP_NAME }}:${{ steps.get_version.outputs.VERSION }} -t ${{ vars.APP_NAME }}:latest .
+            
+          # 为阿里云打标签
+          docker tag ${{ vars.APP_NAME }}:${{ steps.get_version.outputs.VERSION }} ${{ vars.REGISTRY_MIRROR }}/${{ vars.REGISTRY_NAMESPACE }}/${{ vars.APP_NAME }}:${{ steps.get_version.outputs.VERSION }}
+          docker tag ${{ vars.APP_NAME }}:latest ${{ vars.REGISTRY_MIRROR }}/${{ vars.REGISTRY_NAMESPACE }}/${{ vars.APP_NAME }}:latest
+          
+          # 推送到阿里云
+          docker push ${{ vars.REGISTRY_MIRROR }}/${{ vars.REGISTRY_NAMESPACE }}/${{ vars.APP_NAME }}:${{ steps.get_version.outputs.VERSION }}
+          docker push ${{ vars.REGISTRY_MIRROR }}/${{ vars.REGISTRY_NAMESPACE }}/${{ vars.APP_NAME }}:latest
+          
+          # 登出阿里云
+          docker logout
