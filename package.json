@@ -21,6 +21,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.0.0",
     "@ant-design/nextjs-registry": "^1.0.2",
     "@ant-design/pro-components": "^2.6.49",
     "@ant-design/v5-patch-for-react-19": "^1.0.3",
@@ -47,19 +48,22 @@
     "antd": "^5.14.1",
     "axios": "^1.10.0",
     "bcryptjs": "^3.0.2",
+    "clsx": "^2.1.1",
+    "dayjs": "^1.11.13",
     "eslint-plugin-import": "^2.31.0",
     "fabric": "^6.6.4",
     "framer-motion": "^12.8.2",
     "fs-extra": "^11.3.0",
     "katex": "^0.16.22",
     "lucide-react": "^0.523.0",
-    "next": "^15.3.2",
+    "next": "^15.4.6",
     "next-auth": "^5.0.0-beta.27",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "server-only": "^0.0.1",
     "sharp": "^0.34.1",
     "superjson": "^2.2.1",
+    "tailwind-merge": "^3.3.1",
     "vditor": "^3.11.0",
     "zod": "^3.24.2"
   },
@@ -85,5 +89,5 @@
   "ct3aMetadata": {
     "initVersion": "7.39.3"
   },
-  "packageManager": "yarn@1.22.22"
+  "packageManager": "pnpm@10.14.0"
 }
