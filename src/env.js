@@ -32,6 +32,8 @@ export const env = createEnv({
     AWS_IMAGES_DIR: z.string().optional(),
     AWS_URL:z.string().url().optional(),
     GEMINI_API_KEY: z.string().optional(),
+    DOUBAO_API_KEY: z.string().optional(),
+    DOUBAO_MODEL_NAME: z.string().optional(),
     PROMPT: z.string().optional(),
   },
 
@@ -69,6 +71,8 @@ export const env = createEnv({
     AWS_URL:process.env.AWS_URL,
     AWS_IMAGES_DIR:process.env.AWS_IMAGES_DIR,
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+    DOUBAO_API_KEY: process.env.DOUBAO_API_KEY,
+    DOUBAO_MODEL_NAME: process.env.DOUBAO_MODEL_NAME,
     PROMPT: process.env.PROMPT,
   },
   /**

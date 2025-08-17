@@ -1,7 +1,7 @@
 "use client";
 // import { useEffect } from "react";
 
-import { GoogleOutlined, LeftOutlined, RightOutlined } from "@ant-design/icons";
+import { LeftOutlined, RightOutlined, RobotOutlined } from "@ant-design/icons";
 import { type User } from "@prisma/client";
 import { Button, InputNumber, Popconfirm, Select } from "antd";
 export default function ImageControl({
@@ -18,7 +18,7 @@ export default function ImageControl({
   ocrPreAnnotationsId,
   setOcrPreAnnotationsId,
   imageAnnotations,
-  onRefreshGemini,
+  onRefreshOCR,
 }: {
   prevImage: () => void;
   nextImage: () => void;
@@ -33,7 +33,7 @@ export default function ImageControl({
   ocrPreAnnotationsId?: string | undefined;
   setOcrPreAnnotationsId?: (ocrPreAnnotationsId: string) => void;
   imageAnnotations?: { createdBy: User | null; createdAt: Date; id: string,note?:string }[];
-  onRefreshGemini?: () => void;
+  onRefreshOCR?: () => void;
 }) {
   // 键盘快捷键处理
   // useEffect(() => {
@@ -65,7 +65,7 @@ export default function ImageControl({
       <Button type="primary" onClick={saveAnnotations} loading={isSaving}>
         保存标注
       </Button>
-      {/* 刷新Gemini按钮，仅OCR场景下显示 */}
+      {/* AI OCR按钮，仅OCR场景下显示 */}
       <Popconfirm
         key="delete"
         title="确定要删除这个标注吗？"
@@ -88,8 +88,12 @@ export default function ImageControl({
           }))}
         />
       )}
-      {onRefreshGemini && (
-        <GoogleOutlined onClick={onRefreshGemini}/>
+      {onRefreshOCR && (
+        <RobotOutlined 
+          onClick={onRefreshOCR}
+          title="AI OCR识别"
+          style={{ cursor: 'pointer', fontSize: '16px' }}
+        />
       )}
       <Button onClick={nextImage} disabled={!hasNextImage}>
         <RightOutlined />
