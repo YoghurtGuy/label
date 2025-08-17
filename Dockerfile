@@ -1,4 +1,8 @@
 FROM node:22-alpine AS base
+
+# Enable corepack and install pnpm
+RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
+
 ##### DEPENDENCIES
 
 FROM base AS deps
@@ -12,12 +16,12 @@ COPY prisma ./
 
 # 使用 PNPM 包管理工具安装依赖包
 
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml\* ./
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
 RUN \
  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
  elif [ -f package-lock.json ]; then npm ci; \
- elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i; \
+ elif [ -f pnpm-lock.yaml ]; then pnpm install --frozen-lockfile; \
  else echo "Lockfile not found." && exit 1; \
  fi
 
@@ -35,7 +39,7 @@ COPY . .
 RUN \
  if [ -f yarn.lock ]; then SKIP_ENV_VALIDATION=1 yarn build; \
  elif [ -f package-lock.json ]; then SKIP_ENV_VALIDATION=1 npm run build; \
- elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && SKIP_ENV_VALIDATION=1 pnpm run build; \
+ elif [ -f pnpm-lock.yaml ]; then SKIP_ENV_VALIDATION=1 pnpm run build; \
  else echo "Lockfile not found." && exit 1; \
  fi
 
