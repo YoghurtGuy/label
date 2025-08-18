@@ -30,7 +30,7 @@ export const authConfig = {
   session: {
     // Set to jwt in order to CredentialsProvider works properly
     strategy: "jwt",
-    maxAge: 60 * 60 * 12,
+    maxAge: 60 * 60 * 24 * 7,
   },
   providers: [
     CredentialsProvider({
