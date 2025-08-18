@@ -34,6 +34,7 @@ export const env = createEnv({
     GEMINI_API_KEY: z.string().optional(),
     DOUBAO_API_KEY: z.string().optional(),
     DOUBAO_MODEL_NAME: z.string().optional(),
+    DOUBAO_IS_THINKING: z.boolean().default(true),
     PROMPT: z.string().optional(),
   },
 
@@ -73,6 +74,7 @@ export const env = createEnv({
     GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     DOUBAO_API_KEY: process.env.DOUBAO_API_KEY,
     DOUBAO_MODEL_NAME: process.env.DOUBAO_MODEL_NAME,
+    DOUBAO_IS_THINKING: process.env.DOUBAO_IS_THINKING,
     PROMPT: process.env.PROMPT,
   },
   /**

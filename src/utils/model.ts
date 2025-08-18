@@ -54,7 +54,10 @@ async function ocrWithDoubao(
         Authorization: `Bearer ${env.DOUBAO_API_KEY}`,
       },
       body: JSON.stringify({
-        model: "doubao-1-5-vision-pro-32k-250115",
+        model: env.DOUBAO_MODEL_NAME,
+        thinking: {
+          type: env.DOUBAO_IS_THINKING ? "enabled" : "disabled",
+        },
         messages: [
           {
             role: "user",
