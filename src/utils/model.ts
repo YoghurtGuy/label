@@ -97,9 +97,10 @@ async function ocrWithDoubao(
   if (!data.choices?.[0]?.message?.content) {
     throw new Error("豆包识别失败：未返回有效内容");
   }
+  const text = data.choices[0].message.content;
 
   return {
-    text: data.choices[0].message.content,
+    text: text.replace(/\\\(/g, "$").replace(/\\\)/g, "$"),
     model: "豆包",
   };
 }
