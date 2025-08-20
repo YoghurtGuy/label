@@ -1,3 +1,4 @@
+export const maxDuration = 60;
 import { GoogleGenAI } from "@google/genai";
 
 import { env } from "@/env";
