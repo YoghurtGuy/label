@@ -32,7 +32,12 @@ export default function ImageControl({
   imageCount: number;
   ocrPreAnnotationsId?: string | undefined;
   setOcrPreAnnotationsId?: (ocrPreAnnotationsId: string) => void;
-  imageAnnotations?: { createdBy: User | null; createdAt: Date; id: string,note?:string }[];
+  imageAnnotations?: {
+    createdBy: User | null;
+    createdAt: Date;
+    id: string;
+    note?: string;
+  }[];
   onRefreshOCR?: () => void;
 }) {
   // 键盘快捷键处理
@@ -51,53 +56,56 @@ export default function ImageControl({
   //   };
   // }, [prevImage, nextImage]);
   return (
-    <div className="mb-4 flex items-center justify-between">
-      <Button onClick={prevImage} disabled={!hasPrevImage}>
-        <LeftOutlined />
-      </Button>
-      <InputNumber
-        value={imageIndex + 1}
-        suffix={`/${imageCount ?? 0}`}
-        min={1}
-        max={imageCount ?? 0}
-        onChange={(value) => handleImageChange((value ?? 0) - 1)}
-      />
-      <Button type="primary" onClick={saveAnnotations} loading={isSaving}>
-        保存标注
-      </Button>
-      {/* AI OCR按钮，仅OCR场景下显示 */}
-      <Popconfirm
-        key="delete"
-        title="确定要删除这个标注吗？"
-        onConfirm={deleteImage}
-        okText="确定"
-        cancelText="取消"
-      >
-        <Button danger type="dashed">
-          删除图像
+    <div className="mb-4 space-y-2">
+      {/* 主控制栏 */}
+      <div className="flex items-center justify-between">
+        <Button onClick={prevImage} disabled={!hasPrevImage}>
+          <LeftOutlined />
         </Button>
-      </Popconfirm>
-      {imageAnnotations && setOcrPreAnnotationsId && (
-        <Select
-          value={ocrPreAnnotationsId}
-          onChange={(value) => setOcrPreAnnotationsId(value)}
-          options={imageAnnotations.map((annotation) => ({
-            label: `${annotation.createdBy?.name??"预标"}:${annotation.note??annotation.createdAt.toLocaleDateString("zh-CN").slice(0, 10).replace(/-/g, '')}`,
-            value: annotation.id,
-            title: `${annotation.note??"-"}:${annotation.createdAt.toLocaleDateString("zh-CN")}`,
-          }))}
+        <InputNumber
+          value={imageIndex + 1}
+          suffix={`/${imageCount ?? 0}`}
+          min={1}
+          max={imageCount ?? 0}
+          onChange={(value) => handleImageChange((value ?? 0) - 1)}
         />
-      )}
-      {onRefreshOCR && (
-        <RobotOutlined 
-          onClick={onRefreshOCR}
-          title="AI OCR识别"
-          style={{ cursor: 'pointer', fontSize: '16px' }}
-        />
-      )}
-      <Button onClick={nextImage} disabled={!hasNextImage}>
-        <RightOutlined />
-      </Button>
+        <Button type="primary" onClick={saveAnnotations} loading={isSaving}>
+          保存标注
+        </Button>
+        {/* AI OCR按钮，仅OCR场景下显示 */}
+        <Popconfirm
+          key="delete"
+          title="确定要删除这个标注吗？"
+          onConfirm={deleteImage}
+          okText="确定"
+          cancelText="取消"
+        >
+          <Button danger type="dashed">
+            删除图像
+          </Button>
+        </Popconfirm>
+        {imageAnnotations && setOcrPreAnnotationsId && (
+          <Select
+            value={ocrPreAnnotationsId}
+            onChange={(value) => setOcrPreAnnotationsId(value)}
+            options={imageAnnotations.map((annotation) => ({
+              label: `${annotation.createdBy?.name ?? "预标"}:${annotation.note ?? annotation.createdAt.toLocaleDateString("zh-CN").slice(0, 10).replace(/-/g, "")}`,
+              value: annotation.id,
+              title: `${annotation.note ?? "-"}:${annotation.createdAt.toLocaleDateString("zh-CN")}`,
+            }))}
+          />
+        )}
+        {onRefreshOCR && (
+          <RobotOutlined
+            onClick={onRefreshOCR}
+            title="AI OCR识别"
+            style={{ cursor: "pointer", fontSize: "16px" }}
+          />
+        )}
+        <Button onClick={nextImage} disabled={!hasNextImage}>
+          <RightOutlined />
+        </Button>
+      </div>
     </div>
   );
 }

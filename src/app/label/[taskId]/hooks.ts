@@ -45,6 +45,26 @@ export const useImageAnnotation = (taskId: string) => {
     enabled: !!taskId,
   });
 
+  // 获取任务状态
+  const { data: taskStatus, refetch: refetchTaskStatus } =
+    api.task.getTaskStatus.useQuery(taskId, {
+      enabled: !!taskId,
+    });
+
+  // 申请图片的mutation
+  const requestImagesMutation = api.task.requestImages.useMutation({
+    onSuccess: (result) => {
+      appMessage.success(`成功申请了${result.assignedCount}张图片`);
+      void refetchImageList();
+
+      void refetchTaskStatus();
+    },
+    onError: (error) => {
+      console.error("申请图片失败:", error);
+      appMessage.error(error.message || "申请图片失败");
+    },
+  });
+
   // 获取当前图像的标注
   const {
     data: imageAnnotations = [],
@@ -53,7 +73,7 @@ export const useImageAnnotation = (taskId: string) => {
   } = api.image.getAnnotations.useQuery(
     imageList[currentImageIndex]?.id ?? "",
     {
-      enabled: !!imageList[currentImageIndex],
+      enabled: !!imageList[currentImageIndex] &&!isLoadingImages,
     },
   );
 
@@ -80,6 +100,19 @@ export const useImageAnnotation = (taskId: string) => {
       appMessage.error("删除图像失败");
     },
   });
+
+  // 自动申请图片的逻辑
+  useEffect(() => {
+    if (
+      !isLoadingImages &&
+      taskStatus &&
+      imageList.length === 0 &&
+      taskStatus.canRequestMore
+    ) {
+      // 如果没有图片且可以申请更多，自动申请
+      requestImagesMutation.mutate(taskId);
+    }
+  }, [taskStatus, imageList.length, taskId, isLoadingImages]);
 
   useEffect(() => {
     if (lastAnnotatedImage && imageList.length > 0 && currentImageIndex === 0) {
@@ -115,7 +148,7 @@ export const useImageAnnotation = (taskId: string) => {
     }
     setOcrPreAnnotationsId(imageAnnotations[imageAnnotations.length - 1]?.id);
   }, [imageAnnotations]);
-  
+
   useEffect(() => {
     setOCRText(
       imageAnnotations.find(
@@ -272,16 +305,19 @@ export const useImageAnnotation = (taskId: string) => {
   // 切换到下一张图像
   const nextImage = () => {
     if (imageList.length === 0) return;
+
+    // 检查是否需要自动申请更多图片
+    const remainingImages = imageList.length - currentImageIndex - 1;
+    if (remainingImages < 5 && !requestImagesMutation.isPending) {
+      // 如果剩余图片少于5张且可以申请更多，自动申请
+      if (taskStatus?.canRequestMore) {
+        requestImagesMutation.mutate(taskId);
+      } else {
+        appMessage.warning("没有更多图片可以申请了");
+      }
+    }
+
     handleImageChange(currentImageIndex + 1);
-    // const currentIndex = imageList.findIndex(
-    //   (img) => img.id === currentImageId,
-    // );
-    // const nextImage = imageList[currentIndex + 1];
-    // if (nextImage) {
-    //   setCurrentImageId(nextImage.id);
-    //   setSelectedAnnotation(null);
-    //   setAnnotations([]); // 清空当前标注
-    // }
   };
 
   // 切换到上一张图像

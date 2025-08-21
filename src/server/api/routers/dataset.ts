@@ -110,24 +110,6 @@ const datasetRouter = createTRPCRouter({
         },
         include: {
           labels: true,
-          images: {
-            include: {
-              taskOnImage: true,
-              annotations: {
-                where: {
-                  createdById: {
-                    not: null,
-                  },
-                },
-              },
-            },
-            orderBy: {
-              order: "asc",
-            },
-            where: {
-              deleteById: null,
-            },
-          },
         },
       });
 
@@ -137,25 +119,43 @@ const datasetRouter = createTRPCRouter({
           message: "数据集不存在",
         });
       }
+      const imageCount= await ctx.db.image.count({
+        where:{
+          datasetId:input,
+          deleteById:null
+        }
+      })
+      const unAnotatedImageCount =await ctx.db.image.count({
+        where:{
+          datasetId:input,
+          deleteById:null,
+          annotations:{
+            every:{
+              createdById:null
+            }
+          }
+        }
+      })
 
       // 添加序号信息
-      const unassignedImageIndex: number[] = [];
-      const unannotatedImageIndex: number[] = [];
-      dataset.images.forEach((image) => {
-        if (!image.annotations.length) {
-          unannotatedImageIndex.push(image.order);
-        }
-        if (!image.taskOnImage.length) {
-          unassignedImageIndex.push(image.order);
-        }
-      });
+      // const unassignedImageIndex: number[] = [];
+      // const unannotatedImageIndex: number[] = [];
+      // dataset.images.forEach((image) => {
+      //   if (!image.annotations.length) {
+      //     unannotatedImageIndex.push(image.order);
+      //   }
+      //   if (!image.taskOnImage.length) {
+      //     unassignedImageIndex.push(image.order);
+      //   }
+      // });
       return {
         ...dataset,
-        index: {
-          unassigned: unassignedImageIndex,
-          unannotated: unannotatedImageIndex,
-        },
-        imageCount: dataset.images.length,
+        // index: {
+        //   unassigned: unassignedImageIndex,
+        //   unannotated: unannotatedImageIndex,
+        // },
+        unAnotatedImageCount,
+        imageCount,
       };
     }),
 

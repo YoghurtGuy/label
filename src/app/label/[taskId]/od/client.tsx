@@ -37,7 +37,7 @@ export default function ObjectDetectionPage({
     currentImageIndex,
     imageCount,
     handleImageChange,
-    handleDeleteImage
+    handleDeleteImage,
   } = useImageAnnotation(taskId);
 
   if (!taskId||(taskDetails&&taskDetails.dataset?.type !== "OBJECT_DETECTION")) {

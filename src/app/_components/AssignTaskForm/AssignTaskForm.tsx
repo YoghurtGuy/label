@@ -3,13 +3,12 @@ import React from "react";
 import {
   ProForm,
   ProFormSelect,
-  ProFormDigitRange,
   ProFormText,
 } from "@ant-design/pro-components";
 import { Modal, Row, Col, Card } from "antd";
 
 import { type CreateTaskInput } from "@/types/task";
-import { transIndex } from "@/utils/transIndex";
+
 
 import { useAssignTaskForm, type AssignTaskFormProps } from "./hooks";
 /**
@@ -60,30 +59,18 @@ const AssignTaskForm: React.FC<AssignTaskFormProps> = (props) => {
           <Col span={8}>
             <div>
               <Card size="small">
-                <div className="text-sm font-bold">未分配序号</div>
-                <div>{transIndex(dataset?.index.unassigned ?? [])}</div>
+                <div className="text-sm font-bold">数据集图片总数</div>
+                <div>{dataset?.imageCount ?? 0}</div>
               </Card>
             </div>
             <div className="mt-2">
               <Card size="small">
-                <div className="text-sm font-bold">未标注序号</div>
-                <div>{transIndex(dataset?.index.unannotated ?? [])}</div>
+                <div className="text-sm font-bold">未标注图片数</div>
+                <div>{dataset?.unAnotatedImageCount ?? 0}</div>
               </Card>
             </div>
           </Col>
         </Row>
-        <ProFormDigitRange
-          name="indexRange"
-          label="图像序号"
-          min={0}
-          max={dataset?.imageCount ?? 0}
-          rules={[
-            {
-              required: true,
-              message: "请选择图像序号！",
-            },
-          ]}
-        />
         <ProFormSelect
           name="assignedTo"
           label="分配人员"

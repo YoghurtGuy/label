@@ -198,23 +198,15 @@ export const taskRouter = createTRPCRouter({
         description: z.string(),
         datasetId: z.string(),
         assignedTo: z.array(z.string()),
-        indexRange: z.array(z.number()).min(2).max(2),
       }),
     )
     .mutation(async ({ ctx, input }) => {
-      const { name, description, datasetId, assignedTo, indexRange } = input;
+      const { name, description, datasetId, assignedTo } = input;
 
       // 检查数据集是否存在
       const dataset = await ctx.db.dataset.findFirst({
         where: {
           id: datasetId,
-        },
-        include: {
-          images: {
-            orderBy: {
-              order: "asc",
-            },
-          },
         },
       });
 
@@ -231,49 +223,17 @@ export const taskRouter = createTRPCRouter({
         });
       }
 
-      // 检查索引范围是否有效
-      const startIndex = indexRange[0];
-      const endIndex = indexRange[1];
-      if (
-        startIndex === undefined ||
-        endIndex === undefined ||
-        startIndex < 0 ||
-        endIndex >= dataset.images.length ||
-        startIndex > endIndex
-      ) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "图像索引范围无效",
-        });
-      }
-      // 获取指定范围的图像
-      const images = dataset.images.filter(
-        (image) =>
-          image.order >= startIndex &&
-          image.order <= endIndex &&
-          image.deleteById === null,
-      );
-      // 平均随机分配图像
-      const assignedImages = distributeImagesToUsers(
-        images.map((image) => image.id),
-        assignedTo,
-      );
-      const createTaskPromises = Object.entries(assignedImages).map(
-        ([userId, imageUrls]) =>
-          ctx.db.annotationTask.create({
-            data: {
-              name,
-              description,
-              creatorId: ctx.session.user.id,
-              assignedToId: userId,
-              datasetId,
-              taskOnImage: {
-                create: imageUrls.map((imageId) => ({
-                  imageId,
-                })),
-              },
-            },
-          }),
+      // 创建任务但不分配具体图片
+      const createTaskPromises = assignedTo.map((userId) =>
+        ctx.db.annotationTask.create({
+          data: {
+            name,
+            description,
+            creatorId: ctx.session.user.id,
+            assignedToId: userId,
+            datasetId,
+          },
+        }),
       );
       return await Promise.all(createTaskPromises);
     }),
@@ -438,37 +398,122 @@ export const taskRouter = createTRPCRouter({
   getImageListById: protectedProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
-      const images = await ctx.db.image.findMany({
+      // 首先检查任务权限
+      const task = await ctx.db.annotationTask.findFirst({
         where: {
-          taskOnImage: {
-            some: {
-              taskId: input,
-            },
-          },
-          deleteById: null,
+          id: input,
+          OR: [
+            { creatorId: ctx.session.user.id },
+            { assignedToId: ctx.session.user.id },
+          ],
         },
-        include: {
-          annotations: true,
-        },
-      });
-      const imagesWithAnnotationCount = images.map((image) => {
-        const annotationCount = image.annotations.length;
-        return {
-          ...image,
-          annotationCount,
-          src: getImageSrc(image),
-        };
       });
 
-      if (!images || images.length === 0) {
+      if (!task) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "找不到图像",
+          message: "任务不存在或无权限",
         });
       }
 
+      // const images = await ctx.db.image.findMany({
+      //   where: {
+      //     taskOnImage: {
+      //       some: {
+      //         taskId: input,
+      //       },
+      //     },
+      //     deleteById: null,
+      //   },
+      //   include: {
+      //     annotations: true,
+      //   },
+      //   orderBy: [
+      //     {
+      //     order: "asc",
+      //   },]
+      // });
+      const taskOnImages =await ctx.db.taskOnImage.findMany({
+        where: {
+          taskId: input,
+          image: { 
+            deleteById: null,
+          },
+        },
+        orderBy: [
+          {
+            createdAt: 'asc', // 主要排序：按关联记录的创建时间
+          },
+          {
+            image: {
+               order: 'asc', // 次要排序：按图片的 order 字段
+            }
+          }
+        ],
+        include: {
+          image: { // 包含我们需要的 Image 对象
+            include: {
+              annotations: true, // 也包含 Image 关联的 annotations
+            },
+          },
+        },
+      });
+
+      const imagesWithAnnotationCount = taskOnImages.map((toi) => {
+        const annotationCount = toi.image.annotations.length;
+        return {
+          ...toi.image,
+          annotationCount,
+          src: getImageSrc(toi.image),
+        };
+      });
+
       return imagesWithAnnotationCount;
     }),
+  // 获取任务状态信息
+  getTaskStatus: protectedProcedure
+    .input(z.string())
+    .query(async ({ ctx, input: taskId }) => {
+      const task = await ctx.db.annotationTask.findFirst({
+        where: {
+          id: taskId,
+          assignedToId: ctx.session.user.id
+        },
+      });
+
+      if (!task) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "任务不存在或无权限",
+        });
+      }
+
+      // 已分配的图片数
+      const assignedCount=await ctx.db.taskOnImage.count({
+        where:{
+          task:{
+            datasetId:task?.datasetId
+          }
+        }
+      })
+      // 计算数据集中的总图片数
+      const totalInDataset = await ctx.db.image.count({
+        where:{
+          datasetId:task.datasetId
+        }
+      });
+      console.log("--------------",assignedCount,totalInDataset)
+
+      // 是否还能申请更多图片
+      const canRequestMore = assignedCount < totalInDataset;
+
+      return {
+        totalInRange: totalInDataset,
+        assignedCount,
+        canRequestMore,
+      };
+    }),
+
   getLastAnnotatedImage: protectedProcedure
     .input(z.string())
     .query(async ({ ctx, input }) => {
@@ -489,6 +534,60 @@ export const taskRouter = createTRPCRouter({
       });
       return annotation?.imageId ?? null;
     }),
+  // 申请图片到任务
+  requestImages: protectedProcedure
+    .input(z.string())
+    .mutation(async ({ ctx, input: taskId }) => {
+      // 检查任务是否存在且用户有权限
+      const task = await ctx.db.annotationTask.findFirst({
+        where: {
+          id: taskId,
+          assignedToId: ctx.session.user.id,
+        }
+      });
+
+      if (!task) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "任务不存在或无权限",
+        });
+      }
+
+      // 获取未分配的图片
+      const unassignedImages = await ctx.db.image.findMany({
+        where:{
+          datasetId:task.datasetId,
+          taskOnImage:{
+            none:{}
+          }
+        }
+      });
+      console.log("__________",unassignedImages)
+
+      // 每次申请5张图片
+      const imagesToAssign = unassignedImages.slice(0, 5);
+
+      if (imagesToAssign.length === 0) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "没有更多图片可以申请",
+        });
+      }
+
+      // 将图片分配给任务
+      await ctx.db.taskOnImage.createMany({
+        data: imagesToAssign.map((image) => ({
+          taskId,
+          imageId: image.id,
+        })),
+      });
+
+      return {
+        assignedCount: imagesToAssign.length,
+        totalRemaining: unassignedImages.length - imagesToAssign.length,
+      };
+    }),
+
   getRank: publicProcedure.query(async ({ ctx }) => {
     const users = await ctx.db.user.findMany({
       where: {
@@ -503,11 +602,11 @@ export const taskRouter = createTRPCRouter({
               select: {
                 imageId: true,
               },
-              where:{
-                task:{
-                  creatorId: "cmamm61k80008jo0a2odtvb6t"
-                }
-              }
+              where: {
+                task: {
+                  creatorId: "cmamm61k80008jo0a2odtvb6t",
+                },
+              },
             },
           },
         },
@@ -515,9 +614,9 @@ export const taskRouter = createTRPCRouter({
           select: {
             imageId: true,
           },
-          where:{
-            score:null
-          }
+          where: {
+            score: null,
+          },
         },
       },
     });
