@@ -3,6 +3,7 @@
 
 import { LeftOutlined, RightOutlined, RobotOutlined } from "@ant-design/icons";
 import { type User } from "@prisma/client";
+import { env } from "@/env";
 import { Button, InputNumber, Popconfirm, Select } from "antd";
 export default function ImageControl({
   prevImage,
@@ -95,7 +96,7 @@ export default function ImageControl({
             }))}
           />
         )}
-        {onRefreshOCR && (
+        {onRefreshOCR && env.NEXT_PUBLIC_REFRESH_OCR_ENABLED && (
           <RobotOutlined
             onClick={onRefreshOCR}
             title="AI OCR识别"

@@ -385,6 +385,12 @@ export const imageRouter = createTRPCRouter({
           message: "API Key 未设置，请配置 GEMINI_API_KEY 或 DOUBAO_API_KEY" 
         });
       }
+      if (!env.NEXT_PUBLIC_REFRESH_OCR_ENABLED) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "由于数据安全原因，刷新功能已下线"
+        });
+      }
 
       // 1. 获取图像信息
       const image = await ctx.db.image.findUnique({ where: { id: input.imageId } });

@@ -35,7 +35,7 @@ export const env = createEnv({
     DOUBAO_API_KEY: z.string().optional(),
     DOUBAO_MODEL_NAME: z.string().optional(),
     DOUBAO_IS_THINKING: z.boolean().default(true),
-    PROMPT: z.string().optional(),
+    PROMPT: z.string().optional()
   },
 
   /**
@@ -45,6 +45,7 @@ export const env = createEnv({
    */
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_REFRESH_OCR_ENABLED: z.boolean().default(true),
   },
 
   /**
@@ -76,6 +77,7 @@ export const env = createEnv({
     DOUBAO_MODEL_NAME: process.env.DOUBAO_MODEL_NAME,
     DOUBAO_IS_THINKING: process.env.DOUBAO_IS_THINKING,
     PROMPT: process.env.PROMPT,
+    NEXT_PUBLIC_REFRESH_OCR_ENABLED: process.env.NEXT_PUBLIC_REFRESH_OCR_ENABLED==="true"
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
