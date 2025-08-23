@@ -77,7 +77,7 @@ export const env = createEnv({
     DOUBAO_MODEL_NAME: process.env.DOUBAO_MODEL_NAME,
     DOUBAO_IS_THINKING: process.env.DOUBAO_IS_THINKING,
     PROMPT: process.env.PROMPT,
-    NEXT_PUBLIC_REFRESH_OCR_ENABLED: process.env.NEXT_PUBLIC_REFRESH_OCR_ENABLED==="true"
+    NEXT_PUBLIC_REFRESH_OCR_ENABLED: process.env.NEXT_PUBLIC_REFRESH_OCR_ENABLED!=="false"
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
