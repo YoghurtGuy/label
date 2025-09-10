@@ -1,413 +1,225 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-
-import { Canvas, FabricImage, Rect, Polygon, type FabricObject ,type TPointerEvent, type TPointerEventInfo} from 'fabric';
-
+import { Stage, Layer, Image as KonvaImage, Rect as KonvaRect, Line as KonvaLine, Text as KonvaText } from 'react-konva';
+import useImage from 'use-image';
 import type { Annotation } from '@/types/annotation';
 import type { Label } from '@/types/dataset';
-// import logger from '@/utils/logger';
+import Konva from 'konva';
+
 interface AnnotationCanvasProps {
   imageUrl: string;
-  width: number;
-  height: number;
   label: Label;
   onAnnotationChange?: (annotations: Annotation[]) => void;
   annotations?: Annotation[];
   selectedAnnotationId?: string | null;
+  onSelectAnnotation: (annotation: Annotation) => void;
 }
 
-/**
- * 标注画布组件
- * @param imageUrl 图像URL
- * @param width 画布宽度
- * @param height 画布高度
- * @param label 当前选中的标签
- * @param onAnnotationChange 标注变化回调
- * @param annotations 外部传入的标注数据
- * @param selectedAnnotationId 当前选中的标注ID
- */
 const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
   imageUrl,
-  width,
-  height,
   label,
   onAnnotationChange,
   annotations = [],
   selectedAnnotationId = null,
+  onSelectAnnotation
 }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const fabricCanvasRef = useRef<Canvas | null>(null);
-  // const [currentTool, setCurrentTool] = useState<'rectangle' | 'polygon' | 'select'>(label.type);
+  const [image] = useImage(imageUrl);
+  const stageRef = useRef<Konva.Stage>(null);
+
   const [isDrawing, setIsDrawing] = useState(false);
-  const [polygonPoints, setPolygonPoints] = useState<{ x: number; y: number }[]>([]);
-  const objectMapRef = useRef<Map<string, FabricObject>>(new Map());
+  const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
+  const [currentRect, setCurrentRect] = useState<{ x: number, y: number, width: number, height: number } | null>(null);
 
-  const defaultOpacity = 0.5;
-  const defaultStrokeWidth = 2;
+  const [polygonPoints, setPolygonPoints] = useState<number[]>([]);
 
-  // const canvasLogger = logger.child({ name: "CANVAS", imageUrl, width, height, label, selectedAnnotationId });
-  // 当外部tool属性变化时更新
-  useEffect(() => {
-    finishPolygon();
-    if (fabricCanvasRef.current) {
-      if (label.type === 'select') {
-        fabricCanvasRef.current.isDrawingMode = false;
-        fabricCanvasRef.current.selection = true;
-      } else {
-        fabricCanvasRef.current.selection = false;
-      }
-    }
-  }, [label.id, label.type]);
+  const handleMouseDown = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (label.type === 'select') return;
+    if (!onAnnotationChange) return;
 
-  // 初始化画布
-  useEffect(() => {
-    if (!canvasRef.current) return;
+    const pos = e.target.getStage()?.getPointerPosition();
+    if (!pos) return;
 
-    // 创建 Fabric.js 画布
-    const canvas = new Canvas(canvasRef.current, {
-      width,
-      height,
-      backgroundColor: '#f0f0f0',
-    });
-
-    fabricCanvasRef.current = canvas;
-
-    // 加载图像
-    void (async () => {
-      try {
-        const img = await FabricImage.fromURL(imageUrl);
-        // 调整图像大小以适应画布
-        const scale = Math.min(width / img.width, height / img.height);
-        void img.scale(scale);
-        
-        // 居中图像
-        void img.set({
-          left: (width - img.width * scale) / 2,
-          top: (height - img.height * scale) / 2,
-          selectable: false,
-        });
-        
-        void canvas.add(img);
-        void canvas.renderAll();
-        // canvasLogger.info('图像已加载');
-        console.info('图像已加载');
-      } catch (error) {
-        // canvasLogger.error('加载图像失败:', error);
-        console.error('加载图像失败:', error);
-      }
-    })();
-
-    // 清理函数
-    return () => {
-      const currentObjectMap = objectMapRef;
-      void canvas.dispose();
-      currentObjectMap.current.clear();
-      // canvasLogger.info('画布已清理');
-      console.info('画布已清理');
-    };
-  }, [imageUrl, width, height]);
-
-  // 当外部标注数据变化时，更新画布
-  useEffect(() => {
-    if (!fabricCanvasRef.current) return;
-    
-    const canvas = fabricCanvasRef.current;
-    
-    // 清除所有标注对象
-    const objectsToRemove = canvas.getObjects().filter(
-      (obj) => obj.type === 'rect' || obj.type === 'polygon'
-    );
-    objectsToRemove.forEach((obj) => canvas.remove(obj));
-    objectMapRef.current.clear();
-    
-    // 添加新的标注对象
-    annotations.forEach((annotation) => {
-      let obj: FabricObject | null = null;
-      
-      if (annotation.type === 'rectangle') {
-        const { left, top, width, height, fill, opacity } = annotation.data;
-        obj = new Rect({
-          left,
-          top,
-          width,
-          height,
-          fill: fill ?? annotation.color,
-          opacity: opacity ?? defaultOpacity,
-          stroke: '#000000',
-          strokeWidth: defaultStrokeWidth,
-        });
-      } else if (annotation.type === 'polygon' && annotation.data.points) {
-        obj = new Polygon(
-          annotation.data.points,
-          {
-            fill: annotation.data.fill ?? annotation.color,
-            opacity: annotation.data.opacity ?? defaultOpacity,
-            stroke: '#000000',
-            strokeWidth: defaultStrokeWidth,
-          }
-        );
-      }
-      
-      if (obj) {
-        canvas.add(obj);
-        canvas.bringObjectToFront(obj);
-        // 将标注ID与Fabric对象关联起来
-        objectMapRef.current.set(annotation.id, obj);
-      }
-    });
-    
-    canvas.renderAll();
-  }, [annotations,]);
-
-  // 处理外部选中标注的变化
-  useEffect(() => {
-    if (!fabricCanvasRef.current || !selectedAnnotationId) return;
-    
-    const canvas = fabricCanvasRef.current;
-    const selectedObject = objectMapRef.current.get(selectedAnnotationId);
-    
-    if (selectedObject) {
-      canvas.setActiveObject(selectedObject);
-      canvas.renderAll();
-    }
-  }, [selectedAnnotationId]);
-
-  // 处理鼠标按下事件
-  const handleMouseDown = (e: TPointerEventInfo<TPointerEvent>) => {
-    if (!fabricCanvasRef.current) return;
-    
     if (label.type === 'rectangle') {
-      const pointer = fabricCanvasRef.current.getScenePoint(e.e);
-      const rect = new Rect({
-        left: pointer.x,
-        top: pointer.y,
-        width: 0,
-        height: 0,
-        fill: label.color,
-        opacity: defaultOpacity,
-        stroke: '#000000',
-        strokeWidth: defaultStrokeWidth,
-      });
-      
-      fabricCanvasRef.current.add(rect);
-      fabricCanvasRef.current.setActiveObject(rect);
       setIsDrawing(true);
+      setStartPoint(pos);
+      setCurrentRect({ x: pos.x, y: pos.y, width: 0, height: 0 });
     } else if (label.type === 'polygon') {
-      const pointer = fabricCanvasRef.current.getScenePoint(e.e);
-      
-      if (polygonPoints.length === 0) {
-        // 开始绘制多边形
-        setPolygonPoints([{ x: pointer.x, y: pointer.y }]);
-        setIsDrawing(true);
-      } else {
-        // 添加多边形点
-        const newPoints = [...polygonPoints, { x: pointer.x, y: pointer.y }];
-        setPolygonPoints(newPoints);
-        
-        // 如果点数大于等于3，自动完成当前多边形
-        if (newPoints.length >= 3) {
-          // TODO: 展示多边形
+        if (polygonPoints.length === 0) {
+            setIsDrawing(true);
         }
-      }
+        setPolygonPoints([...polygonPoints, pos.x, pos.y]);
     }
   };
 
-  // 处理鼠标移动事件
-  const handleMouseMove = (e: TPointerEventInfo<TPointerEvent>) => {
-    if (!fabricCanvasRef.current || !isDrawing) return;
-    
-    if (label.type === 'rectangle') {
-      const activeObject = fabricCanvasRef.current.getActiveObject();
-      if (activeObject && activeObject.type === 'rect') {
-        const pointer = fabricCanvasRef.current.getScenePoint(e.e);
-        const rect = activeObject as Rect;
-        
-        const width = Math.abs(pointer.x - rect.left);
-        const height = Math.abs(pointer.y - rect.top);
-        
-        rect.set({
-          width,
-          height,
-        });
-        
-        fabricCanvasRef.current.renderAll();
-      }
-    }
+  const handleMouseMove = (e: Konva.KonvaEventObject<MouseEvent>) => {
+    if (label.type !== 'rectangle' || !isDrawing) return;
+
+    const pos = e.target.getStage()?.getPointerPosition();
+    if (!pos) return;
+
+    const newWidth = pos.x - startPoint.x;
+    const newHeight = pos.y - startPoint.y;
+    setCurrentRect({ x: startPoint.x, y: startPoint.y, width: newWidth, height: newHeight });
   };
 
-  // 处理鼠标松开事件
   const handleMouseUp = () => {
-    if (!fabricCanvasRef.current) return;
-    
-    if (label.type === 'rectangle') {
-      setIsDrawing(false);
-      notifyAnnotationChange();
-    }
+    if (label.type !== 'rectangle' || !isDrawing) return;
+    if (!onAnnotationChange || !currentRect) return;
+
+    setIsDrawing(false);
+
+    const newAnnotation: Annotation = {
+      id: `${Date.now()}-${Math.random() * 1000000}`,
+      type: 'rectangle',
+      label: label.name,
+      color: label.color,
+      data: {
+        left: currentRect.x,
+        top: currentRect.y,
+        width: currentRect.width,
+        height: currentRect.height,
+      },
+    };
+
+    onAnnotationChange([...annotations, newAnnotation]);
+    setCurrentRect(null);
   };
 
-  // 完成多边形绘制
-  const finishPolygon = () => {
-    if (!fabricCanvasRef.current || polygonPoints.length < 3) return;
-    
-    // 创建多边形
-    const polygon = new Polygon(
-      polygonPoints.map(point => ({ x: point.x, y: point.y })),
-      {
-        fill: label.color,
-        opacity: defaultOpacity,
-        stroke: '#000000',
-        strokeWidth: defaultStrokeWidth,
-      }
-    );
-    
-    fabricCanvasRef.current.add(polygon);
-    fabricCanvasRef.current.renderAll();
-    // canvasLogger.info('多边形已绘制', {
-    //   polygonPoints,
-    //   label,
-    // });
-    console.info('多边形已绘制', {
-      polygonPoints,
-      label,
-    });
+  const handleFinishPolygon = () => {
+    if (label.type !== 'polygon' || polygonPoints.length < 6) return;
+    if (!onAnnotationChange) return;
 
-    // 重置多边形点
+    const newAnnotation: Annotation = {
+        id: String(Date.now() + Math.random()),
+        type: 'polygon',
+        label: label.name,
+        color: label.color,
+        data: {
+            points: polygonPoints.reduce((acc: {x:number, y:number}[], _, i, arr) => {
+                if (i % 2 === 0) {
+                    acc.push({ x: arr[i]!, y: arr[i+1]! });
+                }
+                return acc;
+            }, [])
+        },
+    };
+    onAnnotationChange([...annotations, newAnnotation]);
     setPolygonPoints([]);
     setIsDrawing(false);
-    notifyAnnotationChange();
-  };
+  }
 
-  // 通知标注变化
-  const notifyAnnotationChange = () => {
-    if (!fabricCanvasRef.current || !onAnnotationChange) return;
-    
-    const result: Annotation[] = [];
-    
-    fabricCanvasRef.current.getObjects()
-      .filter((obj: FabricObject) => obj.type === 'rect' || obj.type === 'polygon')
-      .forEach((obj: FabricObject) => {
-        // 查找现有标注
-        const existingAnnotation = annotations.find(annotation => {
-          const existingObj = objectMapRef.current.get(annotation.id);
-          return existingObj === obj;
-        });
-
-        if (obj.type === 'rect') {
-          const rect = obj as Rect;
-          result.push({
-            id: existingAnnotation?.id ?? String(Date.now() + Math.random()),
-            type: 'rectangle',
-            label: existingAnnotation?.label ?? '',
-            color: existingAnnotation?.color ?? label.color,
-            data: {
-              left: rect.left,
-              top: rect.top,
-              width: rect.width,
-              height: rect.height,
-              fill: typeof rect.fill === 'string' ? rect.fill : undefined,
-              opacity: rect.opacity,
-            }
-          });
-        } else if (obj.type === 'polygon') {
-          const polygon = obj as Polygon;
-          result.push({
-            id: existingAnnotation?.id ?? String(Date.now() + Math.random()),
-            type: 'polygon',
-            label: existingAnnotation?.label ?? '',
-            color: existingAnnotation?.color ?? label.color,
-            data: {
-              points: polygon.points,
-              fill: typeof polygon.fill === 'string' ? polygon.fill : undefined,
-              opacity: polygon.opacity,
-            }
-          });
-        }
-      });
-    
-    onAnnotationChange(result);
-  };
-
-  // 设置事件监听
   useEffect(() => {
-    if (!fabricCanvasRef.current) return;
-    
-    const canvas = fabricCanvasRef.current;
-    
-    canvas.on('mouse:down', handleMouseDown);
-    canvas.on('mouse:move', handleMouseMove);
-    canvas.on('mouse:up', handleMouseUp);
-    
-    // 对象修改事件，当用户拖动或调整标注时触发
-    const handleObjectModified = () => {
-      notifyAnnotationChange();
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Enter') {
+            handleFinishPolygon();
+        }
     };
-    
-    canvas.on('object:modified', handleObjectModified);
-    
-    // 添加全局点击事件监听器
-    const handleGlobalClick = (e: MouseEvent) => {
-      // 检查点击是否在画布外部
-      const canvasElement = canvasRef.current;
-      if (!canvasElement) return;
-      
-      const rect = canvasElement.getBoundingClientRect();
-      const isOutsideCanvas = 
-        e.clientX < rect.left ||
-        e.clientX > rect.right ||
-        e.clientY < rect.top ||
-        e.clientY > rect.bottom;
-      
-      // 如果在画布外部且正在绘制多边形，则完成多边形绘制
-      if (isOutsideCanvas && label.type === 'polygon' && polygonPoints.length >= 3) {
-        finishPolygon();
-      }
-    };
-    
-    document.addEventListener('click', handleGlobalClick);
-    
+    window.addEventListener('keydown', handleKeyDown);
     return () => {
-      canvas.off('mouse:down', handleMouseDown);
-      canvas.off('mouse:move', handleMouseMove);
-      canvas.off('mouse:up', handleMouseUp);
-      canvas.off('object:modified', handleObjectModified);
-      document.removeEventListener('click', handleGlobalClick);
-    };
-  }, [label.type, isDrawing, polygonPoints]);
+        window.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [polygonPoints, label.type, onAnnotationChange]);
+
+
+  // Handle selecting annotations
+  const handleShapeClick = (annId: string) => {
+    // TODO: implement selection logic if needed, e.g. call a parent handler
+    console.log('Selected annotation:', annId);
+    const selectAnnotation = annotations.find(a => a.id === annId);
+    if(selectAnnotation) {
+        onSelectAnnotation(selectAnnotation);
+    }
+  };
 
   return (
-    <div className="flex flex-col items-center">
-      <div className="relative border border-gray-300">
-        <canvas ref={canvasRef} />
-        
-        {label.type === 'polygon' && polygonPoints.length > 0 && (
-          <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
-            <svg width={width} height={height}>
-              {polygonPoints.map((point, index) => (
-                <circle
-                  key={index}
-                  cx={point.x}
-                  cy={point.y}
-                  r={5}
-                  fill="red"
-                  stroke="black"
-                  strokeWidth={1}
-                />
-              ))}
-              {polygonPoints.length > 1 && (
-                <polyline
-                  points={polygonPoints.map(p => `${p.x},${p.y}`).join(' ')}
-                  fill="none"
-                  stroke="red"
-                  strokeWidth={2}
-                />
-              )}
-            </svg>
-          </div>
-        )}
-      </div>
+    <div
+      onDoubleClick={handleFinishPolygon}
+      style={{
+        overflow: 'auto',
+        maxWidth: '100vw',
+        maxHeight: 'calc(100vh - 100px)',
+      }}
+    >
+        <Stage
+            width={image?.naturalWidth??800}
+            height={image?.naturalHeight??600}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            ref={stageRef}
+        >
+            <Layer>
+                <KonvaImage image={image} width={image?.naturalWidth} height={image?.naturalHeight} />
+                {annotations.map((ann) => {
+                    if (ann.type === 'rectangle') {
+                        return (
+                            <>
+                                <KonvaRect
+                                    key={ann.id}
+                                    x={ann.data.left}
+                                    y={ann.data.top}
+                                    width={ann.data.width}
+                                    height={ann.data.height}
+                                    fill="transparent"
+                                    stroke={ann.color}
+                                    strokeWidth={selectedAnnotationId === ann.id ? 3 : 2}
+                                    onClick={() => handleShapeClick(ann.id)}
+                                />
+                                <KonvaText
+                                    key={`${ann.id}-text`}
+                                    x={ann.data.left}
+                                    y={ann.data.top! - 20}
+                                    text={`${ann.label}${ann.questionNumber ? `-${ann.questionNumber}` : ''}`}
+                                    fontSize={14}
+                                    fill={ann.color}
+                                    fontStyle="bold"
+                                    onClick={() => handleShapeClick(ann.id)}
+                                />
+                            </>
+                        );
+                    }
+                    if (ann.type === 'polygon' && ann.data.points) {
+                        const flatPoints = ann.data.points.flatMap(p => [p.x, p.y]);
+                        return (
+                            <KonvaLine
+                                key={ann.id}
+                                points={flatPoints}
+                                fill={ann.color}
+                                opacity={0.5}
+                                closed
+                                stroke={selectedAnnotationId === ann.id ? 'black' : 'transparent'}
+                                strokeWidth={2}
+                                onClick={() => handleShapeClick(ann.id)}
+                            />
+                        );
+                    }
+                    return null;
+                })}
+
+                {/* Drawing helpers */}
+                {currentRect && (
+                    <KonvaRect
+                        x={currentRect.x}
+                        y={currentRect.y}
+                        width={currentRect.width}
+                        height={currentRect.height}
+                        fill={label.color}
+                        opacity={0.5}
+                    />
+                )}
+                {polygonPoints.length > 0 && (
+                    <KonvaLine
+                        points={polygonPoints}
+                        stroke={label.color}
+                        strokeWidth={2}
+                        closed={false}
+                    />
+                )}
+            </Layer>
+        </Stage>
     </div>
   );
 };
 
-export default AnnotationCanvas; 
+export default AnnotationCanvas;

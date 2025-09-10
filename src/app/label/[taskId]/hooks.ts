@@ -231,8 +231,14 @@ export const useImageAnnotation = (taskId: string) => {
     setSelectedAnnotation(annotation);
   };
 
+  const handleUpdateAnnotation = (updatedAnnotation: Annotation) => {
+    const oldId = updatedAnnotation.id;
+    const newAnnotations = annotations.map(a => a.id === oldId ? { ...updatedAnnotation,id:`${Date.now()}-${Math.random() * 1000000}`} : a);
+    setAnnotations(newAnnotations);
+  };
+
   // 处理删除标注
-  const handleDeleteAnnotation = (id: string) => {
+  const handleDeleteAnnotation = (id: string,refresh=true) => {
     const newAnnotations = annotations.filter(
       (annotation) => annotation.id !== id,
     );
@@ -242,7 +248,9 @@ export const useImageAnnotation = (taskId: string) => {
     if (selectedAnnotation?.id === id) {
       setSelectedAnnotation(null);
     }
-    void utils.image.getAnnotations.invalidate();
+    if(refresh){
+      void utils.image.getAnnotations.invalidate();
+    }
 
     // TODO: 删除图形
     appMessage.success("标注已删除");
@@ -291,6 +299,7 @@ export const useImageAnnotation = (taskId: string) => {
             type: annotation.type === "rectangle" ? "RECTANGLE" : "POLYGON",
             labelId: annotation.labelId,
             points,
+            questionNumber: annotation.questionNumber,
           };
         }),
       });
@@ -420,5 +429,6 @@ export const useImageAnnotation = (taskId: string) => {
     // getCurrentTool,
     // getCurrentColor,
     refetchAnnotations,
+    handleUpdateAnnotation
   };
 };

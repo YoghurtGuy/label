@@ -1,15 +1,16 @@
 "use client";
 
 import { DeleteOutlined } from "@ant-design/icons";
-import { List, Button, Popconfirm, Card } from "antd";
+import { List, Button, Popconfirm, Card, InputNumber } from "antd";
 
 import type { Annotation } from "@/types/annotation";
 
 interface AnnotationListProps {
   annotations: Annotation[];
   onSelectAnnotation: (annotation: Annotation) => void;
-  onDeleteAnnotation: (id: string) => void;
+  onDeleteAnnotation: (id: string,refresh:boolean) => void;
   selectedAnnotation: Annotation | null;
+  onUpdateAnnotation: (annotation: Annotation) => void;
 }
 
 /**
@@ -25,10 +26,11 @@ const AnnotationList: React.FC<AnnotationListProps> = ({
   onSelectAnnotation,
   onDeleteAnnotation,
   selectedAnnotation,
+  onUpdateAnnotation,
 }) => {
   // 处理删除标注
   const handleDelete = (id: string) => {
-    onDeleteAnnotation(id);
+    onDeleteAnnotation(id, false);
   };
 
   // 处理选择标注
@@ -39,6 +41,12 @@ const AnnotationList: React.FC<AnnotationListProps> = ({
   // 渲染标注项
   const renderAnnotationItem = (annotation: Annotation) => {
     const isSelected = selectedAnnotation?.id === annotation.id;
+
+    const handleQuestionNumberChange = (value: number | null) => {
+      if (value !== null) {
+        onUpdateAnnotation({ ...annotation, questionNumber: value});
+      }
+    };
 
     return (
       <List.Item
@@ -63,6 +71,13 @@ const AnnotationList: React.FC<AnnotationListProps> = ({
             style={{ backgroundColor: annotation.color }}
           />
           <span>{annotation.label ?? "未命名"}</span>
+          <InputNumber
+            size="small"
+            min={1}
+            value={annotation.questionNumber}
+            onChange={handleQuestionNumberChange}
+            style={{ width: 60, marginLeft: 8 }}
+            />
         </div>
       </List.Item>
     );

@@ -38,6 +38,7 @@ export default function ObjectDetectionPage({
     imageCount,
     handleImageChange,
     handleDeleteImage,
+    handleUpdateAnnotation,
   } = useImageAnnotation(taskId);
 
   if (!taskId||(taskDetails&&taskDetails.dataset?.type !== "OBJECT_DETECTION")) {
@@ -51,13 +52,6 @@ export default function ObjectDetectionPage({
     );
   }
 
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex h-screen items-center justify-center">
-  //       <Spin size="large" tip="加载中..." />
-  //     </div>
-  //   );
-  // }
 
   if (taskDetails&&imageList.length === 0) {
     return (
@@ -83,12 +77,11 @@ export default function ObjectDetectionPage({
             <div className="relative overflow-hidden rounded-lg border">
               <AnnotationCanvas
                 imageUrl={currentImage.src??""}
-                width={800}
-                height={600}
                 label={currentLabelInfo ?? { id: "", name: "", color: "", type: "select" }}
                 onAnnotationChange={handleAnnotationChange}
                 annotations={annotations}
                 selectedAnnotationId={selectedAnnotation?.id}
+                onSelectAnnotation={handleSelectAnnotation}
               />
             </div>
           ) : (
@@ -124,6 +117,7 @@ export default function ObjectDetectionPage({
               onSelectAnnotation={handleSelectAnnotation}
               onDeleteAnnotation={handleDeleteAnnotation}
               selectedAnnotation={selectedAnnotation}
+              onUpdateAnnotation={handleUpdateAnnotation}
             />
           </div>
         </div>

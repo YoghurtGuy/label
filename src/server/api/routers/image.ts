@@ -162,6 +162,7 @@ export const imageRouter = createTRPCRouter({
               }),
             ),
             score: z.number().optional(),
+            questionNumber: z.number().optional(),
           }),
         ),
       }),
@@ -176,6 +177,14 @@ export const imageRouter = createTRPCRouter({
           taskOnImage: {
             include: {
               task: true,
+            },
+          },
+          annotations: {
+            where: {
+              createdById: ctx.session.user.id,
+            },
+            include: {
+              points: true,
             },
           },
         },
@@ -203,50 +212,87 @@ export const imageRouter = createTRPCRouter({
 
       // 开始事务
       return await ctx.db.$transaction(async (tx) => {
-        // 删除现有标注
-        await tx.point.deleteMany({
-          where: {
-            annotation: {
-              imageId,
-            },
-          },
-        });
+        // 找出需要删除的标注ID
+        const existingAnnotationIds = new Set(image.annotations.map(a => a.id));
+        const newAnnotationIds = new Set(annotations.filter(a => a.id).map(a => a.id!));
+        
+        const annotationsToDelete = [...existingAnnotationIds].filter(id => !newAnnotationIds.has(id));
+        
+        // 删除不再需要的标注
+        if (annotationsToDelete.length > 0) {
+          await tx.point.deleteMany({
+            where: {
+              annotation: {
+                id: {
+                  in: annotationsToDelete
+                }
+              }
+            }
+          });
 
-        await tx.annotation.deleteMany({
-          where: {
-            imageId,
-            createdById: ctx.session.user.id,
-          },
-        });
+          await tx.annotation.deleteMany({
+            where: {
+              id: {
+                in: annotationsToDelete
+              }
+            }
+          });
+        }
 
-        // 创建新标注
+        // 处理新的标注
         const createdAnnotations = [];
-
         for (const annotation of annotations) {
           const { id, type, labelId, text, points, score } = annotation;
 
-          // 创建标注
-          const createdAnnotation = await tx.annotation.create({
-            data: {
-              id,
-              type,
-              labelId,
-              text,
-              score,
-              createdById: ctx.session.user.id,
-              imageId,
-              // taskId: image.taskId!,
-              points: {
-                create: points.map((point) => ({
-                  x: point.x,
-                  y: point.y,
-                  order: point.order,
-                })),
-              },
-            },
-          });
+          if (id && existingAnnotationIds.has(id)) {
+            // 更新已存在的标注
+            await tx.point.deleteMany({
+              where: {
+                annotationId: id
+              }
+            });
 
-          createdAnnotations.push(createdAnnotation);
+            const updatedAnnotation = await tx.annotation.update({
+              where: { id },
+              data: {
+                type,
+                labelId,
+                text,
+                score,
+                points: {
+                  create: points.map((point) => ({
+                    x: point.x,
+                    y: point.y,
+                    order: point.order,
+                  })),
+                },
+                questionNumber: annotation.questionNumber,
+              },
+            });
+            createdAnnotations.push(updatedAnnotation);
+          } else {
+            // 创建新标注
+            const createdAnnotation = await tx.annotation.create({
+              data: {
+                id,
+                type,
+                labelId,
+                text,
+                score,
+                createdById: ctx.session.user.id,
+                imageId,
+                points: {
+                  create: points.map((point) => ({
+                    x: point.x,
+                    y: point.y,
+                    order: point.order,
+                  })),
+                },
+                questionNumber: annotation.questionNumber,
+              },
+            });
+            createdAnnotations.push(createdAnnotation);
+          }
         }
 
         return {
@@ -359,6 +405,7 @@ export const imageRouter = createTRPCRouter({
           createdAt: annotation.createdAt,
           note: annotation.note ?? undefined,
           score: annotation.score ?? undefined,
+          questionNumber: annotation.questionNumber ?? undefined,
         };
       });
 
