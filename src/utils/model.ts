@@ -18,7 +18,7 @@ async function ocrWithGemini(
 ): Promise<OCRResult> {
   const genAI = new GoogleGenAI({ apiKey: env.GEMINI_API_KEY! });
 
-  const imagePart = await urlToGenerativePart(imageUrl);
+  const imagePart = await urlToGenerativePart(imageUrl.replace("label-s3", "label-s3"));
   const contents = [
     imagePart,
     { text: prompt ?? env.PROMPT ?? "识别图片中的文字" },
