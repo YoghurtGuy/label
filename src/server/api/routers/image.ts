@@ -211,6 +211,12 @@ export const imageRouter = createTRPCRouter({
       }
 
       // 开始事务
+      // 为交互式事务增加等待与超时时间，避免大批量写入时提前结束
+      const transactionOptions = {
+        maxWait: 10_000,
+        timeout: 30_000,
+      };
+
       return await ctx.db.$transaction(async (tx) => {
         // 找出需要删除的标注ID
         const existingAnnotationIds = new Set(image.annotations.map(a => a.id));
@@ -220,16 +226,6 @@ export const imageRouter = createTRPCRouter({
         
         // 删除不再需要的标注
         if (annotationsToDelete.length > 0) {
-          await tx.point.deleteMany({
-            where: {
-              annotation: {
-                id: {
-                  in: annotationsToDelete
-                }
-              }
-            }
-          });
-
           await tx.annotation.deleteMany({
             where: {
               id: {
@@ -243,30 +239,39 @@ export const imageRouter = createTRPCRouter({
         const createdAnnotations = [];
         for (const annotation of annotations) {
           const { id, type, labelId, text, points, score } = annotation;
-
-          if (id && existingAnnotationIds.has(id)) {
-            // 更新已存在的标注
-            await tx.point.deleteMany({
-              where: {
-                annotationId: id
-              }
-            });
-
-            const updatedAnnotation = await tx.annotation.update({
-              where: { id },
-              data: {
-                type,
-                labelId,
-                text,
-                score,
-                points: {
+          const pointWrites =
+            points.length > 0
+              ? {
                   create: points.map((point) => ({
                     x: point.x,
                     y: point.y,
                     order: point.order,
                   })),
-                },
-                isCrossPage: annotation.isCrossPage ?? false,
+                }
+              : undefined;
+          const baseAnnotationData = {
+            type,
+            labelId,
+            text,
+            score,
+            isCrossPage: annotation.isCrossPage ?? false,
+          };
+
+          if (id && existingAnnotationIds.has(id)) {
+            // 更新已存在的标注
+            const updatedAnnotation = await tx.annotation.update({
+              where: { id },
+              data: {
+                ...baseAnnotationData,
+                points:
+                  pointWrites !== undefined
+                    ? {
+                        deleteMany: {},
+                        ...pointWrites,
+                      }
+                    : {
+                        deleteMany: {},
+                      },
               },
             });
             createdAnnotations.push(updatedAnnotation);
@@ -274,21 +279,11 @@ export const imageRouter = createTRPCRouter({
             // 创建新标注
             const createdAnnotation = await tx.annotation.create({
               data: {
-                id,
-                type,
-                labelId,
-                text,
-                score,
+                ...(id ? { id } : {}),
+                ...baseAnnotationData,
                 createdById: ctx.session.user.id,
                 imageId,
-                points: {
-                  create: points.map((point) => ({
-                    x: point.x,
-                    y: point.y,
-                    order: point.order,
-                  })),
-                },
-                isCrossPage: annotation.isCrossPage ?? false,
+                points: pointWrites,
               },
             });
             createdAnnotations.push(createdAnnotation);
@@ -299,7 +294,7 @@ export const imageRouter = createTRPCRouter({
           success: true,
           count: createdAnnotations.length,
         };
-      });
+      }, transactionOptions);
     }),
 
   // 获取图像标注
