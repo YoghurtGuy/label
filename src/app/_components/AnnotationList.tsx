@@ -1,7 +1,8 @@
 "use client";
 
 import { DeleteOutlined } from "@ant-design/icons";
-import { List, Button, Popconfirm, Card, InputNumber } from "antd";
+import { List, Button, Popconfirm, Card, Switch } from "antd";
+import type { SwitchChangeEventHandler } from "antd/es/switch";
 
 import type { Annotation } from "@/types/annotation";
 
@@ -42,10 +43,9 @@ const AnnotationList: React.FC<AnnotationListProps> = ({
   const renderAnnotationItem = (annotation: Annotation) => {
     const isSelected = selectedAnnotation?.id === annotation.id;
 
-    const handleQuestionNumberChange = (value: number | null) => {
-      if (value !== null) {
-        onUpdateAnnotation({ ...annotation, questionNumber: value});
-      }
+    const handleCrossPageChange: SwitchChangeEventHandler = (checked, event) => {
+      event.stopPropagation();
+      onUpdateAnnotation({ ...annotation, isCrossPage: checked });
     };
 
     return (
@@ -71,13 +71,15 @@ const AnnotationList: React.FC<AnnotationListProps> = ({
             style={{ backgroundColor: annotation.color }}
           />
           <span>{annotation.label ?? "未命名"}</span>
-          <InputNumber
+          <span className="ml-2 text-xs text-gray-500">跨页</span>
+          <Switch
             size="small"
-            min={1}
-            value={annotation.questionNumber}
-            onChange={handleQuestionNumberChange}
-            style={{ width: 60, marginLeft: 8 }}
-            />
+            checked={annotation.isCrossPage ?? false}
+            onChange={handleCrossPageChange}
+            checkedChildren="是"
+            unCheckedChildren="否"
+            style={{ marginLeft: 4 }}
+          />
         </div>
       </List.Item>
     );

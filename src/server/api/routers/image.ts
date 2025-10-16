@@ -162,7 +162,7 @@ export const imageRouter = createTRPCRouter({
               }),
             ),
             score: z.number().optional(),
-            questionNumber: z.number().optional(),
+            isCrossPage: z.boolean().optional(),
           }),
         ),
       }),
@@ -266,7 +266,7 @@ export const imageRouter = createTRPCRouter({
                     order: point.order,
                   })),
                 },
-                questionNumber: annotation.questionNumber,
+                isCrossPage: annotation.isCrossPage ?? false,
               },
             });
             createdAnnotations.push(updatedAnnotation);
@@ -288,7 +288,7 @@ export const imageRouter = createTRPCRouter({
                     order: point.order,
                   })),
                 },
-                questionNumber: annotation.questionNumber,
+                isCrossPage: annotation.isCrossPage ?? false,
               },
             });
             createdAnnotations.push(createdAnnotation);
@@ -405,7 +405,7 @@ export const imageRouter = createTRPCRouter({
           createdAt: annotation.createdAt,
           note: annotation.note ?? undefined,
           score: annotation.score ?? undefined,
-          questionNumber: annotation.questionNumber ?? undefined,
+          isCrossPage: annotation.isCrossPage ?? false,
         };
       });
 

@@ -299,7 +299,7 @@ export const useImageAnnotation = (taskId: string) => {
             type: annotation.type === "rectangle" ? "RECTANGLE" : "POLYGON",
             labelId: annotation.labelId,
             points,
-            questionNumber: annotation.questionNumber,
+            isCrossPage: annotation.isCrossPage ?? false,
           };
         }),
       });

@@ -17,5 +17,5 @@ export type Annotation = {
   color: string;
   data: AnnotationData;
   score?: number;
-  questionNumber?: number;
+  isCrossPage?: boolean;
 };
