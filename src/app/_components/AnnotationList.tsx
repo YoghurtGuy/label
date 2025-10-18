@@ -40,7 +40,7 @@ const AnnotationList: React.FC<AnnotationListProps> = ({
   };
 
   // 渲染标注项
-  const renderAnnotationItem = (annotation: Annotation) => {
+  const renderAnnotationItem = (annotation: Annotation, index: number) => {
     const isSelected = selectedAnnotation?.id === annotation.id;
 
     const handleCrossPageChange: SwitchChangeEventHandler = (checked, event) => {
@@ -66,6 +66,7 @@ const AnnotationList: React.FC<AnnotationListProps> = ({
         className={`cursor-pointer hover:bg-gray-50 ${isSelected ? "bg-blue-50" : ""}`}
       >
         <div className="flex items-center">
+          <span className="mr-2 text-sm font-medium text-gray-600">{index + 1}.</span>
           <div
             className="mr-2 h-4 w-4 rounded"
             style={{ backgroundColor: annotation.color }}
@@ -92,7 +93,7 @@ const AnnotationList: React.FC<AnnotationListProps> = ({
       ) : (
         <List
           dataSource={annotations}
-          renderItem={renderAnnotationItem}
+          renderItem={(annotation, index) => renderAnnotationItem(annotation, index)}
           size="small"
         />
       )}

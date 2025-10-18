@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Stage, Layer, Image as KonvaImage, Rect as KonvaRect, Line as KonvaLine, Text as KonvaText } from 'react-konva';
 import useImage from 'use-image';
 import type { Annotation } from '@/types/annotation';
@@ -151,12 +151,14 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
         >
             <Layer>
                 <KonvaImage image={image} width={image?.naturalWidth} height={image?.naturalHeight} />
-                {annotations.map((ann) => {
+                {annotations.map((ann, index) => {
+                    const labelText = `${index + 1}. ${ann.label ?? '未命名'}${ann.isCrossPage ? '-跨页' : ''}`;
+
                     if (ann.type === 'rectangle') {
+                        const textY = Math.max((ann.data.top ?? 0) - 20, 0);
                         return (
-                            <>
+                            <Fragment key={ann.id}>
                                 <KonvaRect
-                                    key={ann.id}
                                     x={ann.data.left}
                                     y={ann.data.top}
                                     width={ann.data.width}
@@ -169,29 +171,51 @@ const AnnotationCanvas: React.FC<AnnotationCanvasProps> = ({
                                 <KonvaText
                                     key={`${ann.id}-text`}
                                     x={ann.data.left}
-                                    y={ann.data.top! - 20}
-                                    text={`${ann.label}${ann.isCrossPage ? '-跨页' : ''}`}
+                                    y={textY}
+                                    text={labelText}
                                     fontSize={14}
                                     fill={ann.color}
                                     fontStyle="bold"
                                     onClick={() => handleShapeClick(ann.id)}
                                 />
-                            </>
+                            </Fragment>
                         );
                     }
                     if (ann.type === 'polygon' && ann.data.points) {
                         const flatPoints = ann.data.points.flatMap(p => [p.x, p.y]);
+                        const pointCount = ann.data.points.length;
+                        if (pointCount === 0) {
+                            return null;
+                        }
+                        const centroid = ann.data.points.reduce(
+                            (acc, point) => ({
+                                x: acc.x + point.x / pointCount,
+                                y: acc.y + point.y / pointCount,
+                            }),
+                            { x: 0, y: 0 }
+                        );
                         return (
-                            <KonvaLine
-                                key={ann.id}
-                                points={flatPoints}
-                                fill={ann.color}
-                                opacity={0.5}
-                                closed
-                                stroke={selectedAnnotationId === ann.id ? 'black' : 'transparent'}
-                                strokeWidth={2}
-                                onClick={() => handleShapeClick(ann.id)}
-                            />
+                            <Fragment key={ann.id}>
+                                <KonvaLine
+                                    points={flatPoints}
+                                    fill={ann.color}
+                                    opacity={0.5}
+                                    closed
+                                    stroke={selectedAnnotationId === ann.id ? 'black' : 'transparent'}
+                                    strokeWidth={2}
+                                    onClick={() => handleShapeClick(ann.id)}
+                                />
+                                <KonvaText
+                                    key={`${ann.id}-text`}
+                                    x={centroid.x}
+                                    y={centroid.y}
+                                    text={labelText}
+                                    fontSize={14}
+                                    fill={ann.color}
+                                    fontStyle="bold"
+                                    onClick={() => handleShapeClick(ann.id)}
+                                />
+                            </Fragment>
                         );
                     }
                     return null;
