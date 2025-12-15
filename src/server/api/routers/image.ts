@@ -180,9 +180,6 @@ export const imageRouter = createTRPCRouter({
             },
           },
           annotations: {
-            where: {
-              createdById: ctx.session.user.id,
-            },
             include: {
               points: true,
             },
@@ -219,10 +216,20 @@ export const imageRouter = createTRPCRouter({
 
       return await ctx.db.$transaction(async (tx) => {
         // 找出需要删除的标注ID
-        const existingAnnotationIds = new Set(image.annotations.map(a => a.id));
-        const newAnnotationIds = new Set(annotations.filter(a => a.id).map(a => a.id!));
-        
-        const annotationsToDelete = [...existingAnnotationIds].filter(id => !newAnnotationIds.has(id));
+        const annotationMap = new Map(image.annotations.map((a) => [a.id, a]));
+        const isOwnedByUser = (annotation: typeof image.annotations[number]) =>
+          annotation.createdById === ctx.session.user.id ||
+          annotation.createdById === null;
+        const userAnnotationIds = new Set(
+          image.annotations.filter(isOwnedByUser).map((a) => a.id),
+        );
+        const newAnnotationIds = new Set(
+          annotations.filter((a) => a.id).map((a) => a.id!),
+        );
+
+        const annotationsToDelete = [...userAnnotationIds].filter(
+          (id) => !newAnnotationIds.has(id),
+        );
         
         // 删除不再需要的标注
         if (annotationsToDelete.length > 0) {
@@ -257,8 +264,10 @@ export const imageRouter = createTRPCRouter({
             isCrossPage: annotation.isCrossPage ?? false,
           };
 
-          if (id && existingAnnotationIds.has(id)) {
-            // 更新已存在的标注
+          const existingAnnotation = id ? annotationMap.get(id) : undefined;
+
+          if (id && existingAnnotation && isOwnedByUser(existingAnnotation)) {
+            // 更新当前用户已有的标注
             const updatedAnnotation = await tx.annotation.update({
               where: { id },
               data: {
@@ -275,6 +284,9 @@ export const imageRouter = createTRPCRouter({
               },
             });
             createdAnnotations.push(updatedAnnotation);
+          } else if (id && existingAnnotation) {
+            // 跳过其他用户的标注，避免ID冲突和误删除
+            continue;
           } else {
             // 创建新标注
             const createdAnnotation = await tx.annotation.create({
