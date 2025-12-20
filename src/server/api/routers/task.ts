@@ -589,6 +589,7 @@ export const taskRouter = createTRPCRouter({
     }),
 
   getRank: publicProcedure.query(async ({ ctx }) => {
+    return [];
     const users = await ctx.db.user.findMany({
       where: {
         OR: [{ assignedTasks: { some: {} } }, { annotations: { some: {} } }],
