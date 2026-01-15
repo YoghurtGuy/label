@@ -27,6 +27,7 @@ async function getS3Client() {
         secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
       },
       endpoint: env.AWS_ENDPOINT,
+      forcePathStyle: true,
     });
     return s3Client;
   }
